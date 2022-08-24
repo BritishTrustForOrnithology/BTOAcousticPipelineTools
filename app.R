@@ -264,6 +264,7 @@ prep_copy_files <- function(dat, input, p, sampsize_noid, sampsize_random, samps
     if(cpmethod == "Top hits") {
       #get detections for this species
       this_detections <- subset(dat, species == this_sp & probability >= p)
+      if(nrow(this_detections)==0) next
       #sort by descending p
       this_detections <- this_detections[order(this_detections$location, this_detections$survey.date, -this_detections$probability),]
       #create counter by group (location/date): 1 = highest probability per location/date
@@ -1132,8 +1133,13 @@ server <- function(input, output, session) {
                                            sampsize_tophits = input$sampsize_tophits,
                                            path_audio = global$path_audio,
                                            path_output = global$path_output)
-    #enable the validate button now
-    enable(id = 'validate_files')
+    if(nrow(global$wavs_to_copy) > 0) {
+      shinyalert(title = "File list prepared", 
+                 text = paste("Now validate to check for problems, e.g. missing files"),
+                 type = "success")    
+      #enable the validate button now
+      enable(id = 'validate_files')
+    }
   })
   
 
@@ -1153,7 +1159,13 @@ server <- function(input, output, session) {
       write.csv(missing_files, file.path(global$path_output, 'missing_audio_files.csv'), row.names = FALSE)
     }
     #if no missing files, activate Copy button
-    if(nrow(missing_files) == 0) enable(id = 'copy_files')
+    if(nrow(missing_files) == 0) {
+      shinyalert(title = "File list validated", 
+                 text = paste("You can now copy the files to species folders"),
+                 type = "success",
+                 showCancelButton = TRUE,
+                 callbackR = function(x) { if(x == TRUE) enable(id = 'copy_files') })
+    }
   })
   
   
