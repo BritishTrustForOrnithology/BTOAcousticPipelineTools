@@ -777,7 +777,9 @@ ui <- fluidPage(
        tags$p("Warning: Clicking the following button will change audio filenames in the selected folders. Proceed with caution", style = "color: DarkOrange;"),
        actionButton("rename_audio", "Rename audio files", class = "btn-success"),
        tags$br(),
-       actionButton("exit3", "Close App", class = "btn-danger"),
+       tags$br(),
+       tags$br(),
+       actionButton("exit3", "Close App", class = "btn-danger", onclick = "setTimeout(function(){window.close();},500);"),
       ),
       mainPanel(
         tags$div(id = 'batloggertab',
@@ -909,10 +911,10 @@ ui <- fluidPage(
           tags$p("Copy the files to the new folders..."),
           actionButton("copy_files", "Copy files", class = "btn-success")
         ),
-        
         tags$br(),
         tags$br(),
-        actionButton("exit1", "Close App", class = "btn-danger"),
+        tags$br(),
+        actionButton("exit1", "Close App", class = "btn-danger", onclick = "setTimeout(function(){window.close();},500);"),
       ),
       mainPanel(
         tags$div(id = 'diagnostics',
@@ -947,8 +949,10 @@ ui <- fluidPage(
         )
     ),
     tabPanel("Exit", fluid = TRUE,
-        h5("Press Close App button then close browser"),
-        actionButton("exit2", "Close App", class = "btn-danger"),
+      tags$br(),
+      tags$br(),
+      tags$br(),
+      actionButton("exit2", "Close App", class = "btn-danger", onclick = "setTimeout(function(){window.close();},500);"),
     )
   )
 )
