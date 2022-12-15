@@ -7,7 +7,7 @@ An R Shiny App to help with auditing audio recordings processed with the BTO Aco
 
 1. Check Requirements
 2. Follow Installation instructions
-3. Do not directly run app.R. Instead run launch_shiny_app, but only after completing steps 1 and 2 above
+3. Do not directly run 'app.R'. Instead run 'launch_shiny_app.R', but only after completing steps 1 and 2 above
 
 
 ## Requirements
@@ -27,9 +27,9 @@ You will need the following R packages installed. If you are not familiar with i
 
 ## Usage
 
-*Do not directly run app.R.* Instead, with R/RStudio open, open the script file called 'launch_shiny_app.R'. Follow the instructions there, in particular noting the need to update the path_to_app line to say where you have saved the app.R file. For most uses this is the only change you will need to make. For very large validation jobs (e.g. for a batch of >100,000 wav files) it may be more efficient to pass the paths to the audio and output directories, which can be done by adding these to the shinyOptions command as detailed in launch_shiny_app.R.
-
-Running the 'launch_shiny_app.R' will open the app in a new browser window.
+* *Do not directly run 'app.R'.* Instead, with R/RStudio open, open the script file called 'launch_shiny_app.R'. Follow the instructions there, in particular noting the need to update the path_to_app line to say where you have saved the 'app.R' file. 
+* For most uses this is the only change you will need to make. For very large validation jobs (e.g. for a batch of >100,000 wav files) it may be more efficient to pass the paths to the audio and output directories, which can be done by adding these to the shinyOptions command as detailed in 'launch_shiny_app.R'.
+* Running the 'launch_shiny_app.R' will open the app in a new browser window.
 
 
 ## Issues
