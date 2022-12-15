@@ -419,6 +419,10 @@ copy_files <- function(wavs_to_copy, path_output, append_identity) {
       incProgress(1/maxits, detail = r)
     }
   })
+  
+  #clear the passed options otherwise they stay in session
+  passed_path_audio <- NULL
+  passed_path_output <- NULL
 }
 
 
@@ -650,6 +654,10 @@ audit_audio <- function(path) {
 
 #' THE SHINY PART -------------------------------------------------------------------------------
 
+#passed parameters
+passed_path_audio <- getShinyOption('path_audio', default = NULL)
+passed_path_output <- getShinyOption('path_output', default = NULL)
+
 #constants
 credit <- 'App written by Simon Gillings, BTO'
 
@@ -879,7 +887,7 @@ ui <- fluidPage(
         
         tags$div(id = "step4",
           h4("Step 4: Set audio and output folders"),
-          tags$p("Finally, select the folder containing your original audio files, and a folder where you want the species folders to be made, and then click Copy files. Your original audio files will not be modified."),
+          tags$p("Finally, select the folder containing your original audio files, and a folder where you want the species folders to be made, and then click Prepare files for copy. Your original audio files will not be modified."),
           tags$p("Hint: Only use left side of popup to navigate to folder", style = "color: red;"),
           shinyDirButton(id = 'dir_audio', 
                          label = 'Select audio folder', 
@@ -901,6 +909,23 @@ ui <- fluidPage(
           hr(style="border-color: grey;"),
           tags$br(),
         ),
+        
+        tags$div(id = "step4manual",
+                 h4("Step 4: Use preset audio and output folders"),
+                 tags$p("Folder containing your original audio files and folder where you want the species folders to be made, as defined by passed options. Now click Prepare files for copy. Your original audio files will not be modified."),
+                 verbatimTextOutput("path_audio2", placeholder = TRUE),
+                 verbatimTextOutput("path_output2", placeholder = TRUE),
+                 checkboxInput(
+                   inputId = "append_identity",
+                   label = 'Append species code to filenames?',
+                   value = FALSE,
+                   width = NULL
+                 ),
+                 #tags$br(),
+                 hr(style="border-color: grey;"),
+                 tags$br(),
+        ),
+        
         
         tags$div(id = "step5",
           h4("Step 5: Prepare, validate and copy the files"),
@@ -967,8 +992,8 @@ server <- function(input, output, session) {
     path_audioaudit = NULL,
     path_batlogger = NULL,
     wavs_to_copy = NULL,
-    path_audio = NULL,
-    path_output = NULL,
+    path_audio = passed_path_audio,
+    path_output = passed_path_output,
     num_results_files = NULL,
     num_detections = NULL,
     num_detections_perfile = NULL,
@@ -988,6 +1013,7 @@ server <- function(input, output, session) {
   hide(id = 'step2')
   hide(id = 'step3')
   hide(id = 'step4')
+  hide(id = 'step4manual')
   hide(id = 'step5')
   hide(id = 'save_log')
   hide(id = 'save_guano')
@@ -1070,6 +1096,8 @@ server <- function(input, output, session) {
     global$num_detections_final <- temp$metrics$num_detections_after_noid_check
     show(id = 'diagnostics')
     show(id = 'step2')
+    print(global$path_audio)
+    print(global$path_output)
   })
 
   #event handler for analysing the results - key part here is rendering a datatable 
@@ -1123,7 +1151,15 @@ server <- function(input, output, session) {
     #toggle states
     show(id = 'summary')
     show(id = 'step3')
-    show(id = 'step4')
+    #if paths already set from options, check they exist then show step4manual and step5
+    if(!is.null(global$path_audio) & !is.null(global$path_output)) {
+      if(!dir.exists(global$path_audio)) stop('path_audio does not exist')
+      if(!dir.exists(global$path_output)) stop('path_output does not exist')
+      show(id = "step4manual")
+      show(id = "step5")
+    }
+    #else just show the normal step4 for entry
+    if(is.null(global$path_audio) & is.null(global$path_output)) show(id = 'step4')
   })
 
 
@@ -1174,7 +1210,7 @@ server <- function(input, output, session) {
   
   
   #event handler for the copy files button. Button state is hidden by default and only 
-  #visible once validation approved. Return to hidden state once copied to prevent repeating
+  #visible once validation approved. Return to hidden state once copied to prevent repeating. And clear path vars to reset state.
   observeEvent(input$copy_files, {
     copy_files(wavs_to_copy = global$wavs_to_copy, path_output = global$path_output, append_identity = input$append_identity)
     
@@ -1183,6 +1219,8 @@ server <- function(input, output, session) {
                type = "success",
                callbackR = function(x) { if(x == TRUE) disable(id = 'copy_files') })
     #cat(file=stderr(), 'Checkpoint12 - finished copying audio files\n')
+    global$path_audio <- NULL
+    global$path_output <- NULL
   })
 
   #event handler for exit buttons
@@ -1199,8 +1237,8 @@ server <- function(input, output, session) {
   output$path_batlogger <- renderText({ global$path_batlogger })
   output$path_audioaudit <- renderText({ global$path_audioaudit })
   output$file_csv <- renderText({ paste(unlist(global$file_csv), collapse = '\n') })
-  output$path_audio <- renderText({ global$path_audio })
-  output$path_output <- renderText({ global$path_output })
+  output$path_audio <- output$path_audio2 <- renderText({ global$path_audio })
+  output$path_output <- output$path_output2 <- renderText({ global$path_output })
   output$nrecs <- renderText({ nrow(global$detections) })
   output$num_results_files <- renderText( { paste("Number of results files read:", global$num_results_files)})
   output$num_detections <- renderText( { paste("Initial number of records:", global$num_detections)})
