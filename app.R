@@ -10,7 +10,6 @@
 #' Written by Simon Gillings
 #' July 2022
 
-
 require(shiny)
 require(shinyFiles)
 require(shinyalert)
@@ -924,7 +923,7 @@ ui <- fluidPage(
                  verbatimTextOutput("path_audio2", placeholder = TRUE),
                  verbatimTextOutput("path_output2", placeholder = TRUE),
                  checkboxInput(
-                   inputId = "append_identity",
+                   inputId = "append_identity2",
                    label = 'Append species code to filenames?',
                    value = FALSE,
                    width = NULL
@@ -1170,7 +1169,17 @@ server <- function(input, output, session) {
     if(is.null(global$path_audio) & is.null(global$path_output)) show(id = 'step4')
   })
 
-
+  # event handlers for whether to append species names when renaming files. Two versions for watching the two places this can be selected
+  observeEvent(input$append_identity, {
+    global$append_identity <- input$append_identity
+    #print(global$append_identity)
+  })
+  observeEvent(input$append_identity2, {
+    global$append_identity <- input$append_identity2
+    #print(global$append_identity)
+  })
+  
+  
   # event handler for preparing the list of files and destination directories
   observeEvent(input$prepare_files, {
     global$wavs_to_copy <- prep_copy_files(dat = global$detections,
@@ -1220,7 +1229,7 @@ server <- function(input, output, session) {
   #event handler for the copy files button. Button state is hidden by default and only 
   #visible once validation approved. Return to hidden state once copied to prevent repeating. And clear path vars to reset state.
   observeEvent(input$copy_files, {
-    copy_files(wavs_to_copy = global$wavs_to_copy, path_output = global$path_output, append_identity = input$append_identity)
+    copy_files(wavs_to_copy = global$wavs_to_copy, path_output = global$path_output, append_identity = global$append_identity)
     
     shinyalert(title = "Finished", 
                text = "Finished copying files to species folders", 
