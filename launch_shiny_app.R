@@ -19,5 +19,5 @@
 path_to_app <- 'app.R'
 
 #run the app
-shinyOptions(path_audio=NULL, path_output=NULL)
+shiny::shinyOptions(path_audio=NULL, path_output=NULL)
 shiny::runApp(path_to_app, launch.browser = TRUE)
