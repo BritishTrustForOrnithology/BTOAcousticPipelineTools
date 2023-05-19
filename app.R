@@ -44,7 +44,9 @@ read_AP_csv <- function(file) {
       #empty return when data are not the right format
       return(NA)
     },
-    warning = function(cond) return(NA)
+    warning = function(cond) {
+      read.csv(file, stringsAsFactors = FALSE)
+    }
   )
   
   #if try failed to return data, return NA
