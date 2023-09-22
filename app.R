@@ -15,7 +15,7 @@ require(shinyFiles)
 require(shinyalert)
 require(shinyjs)
 require(tidyr)
-require(guano)
+#require(guano)
 require(DT)
 
 
@@ -35,7 +35,7 @@ require(DT)
 read_AP_csv <- function(file) {
   #try to read the csv file
   dat <- tryCatch(
-    {read.csv(file, stringsAsFactors = FALSE)}, 
+    {read.csv(file, stringsAsFactors = FALSE, na.strings = c('NA','null'))}, 
     error = function(cond) {
       shinyalert(title = "Error",
                  text = paste("The following file cannot be read:", basename(file)),
@@ -45,7 +45,7 @@ read_AP_csv <- function(file) {
       return(NA)
     },
     warning = function(cond) {
-      read.csv(file, stringsAsFactors = FALSE)
+      read.csv(file, stringsAsFactors = FALSE, na.strings = c('NA','null'))
     }
   )
   
@@ -64,7 +64,7 @@ read_AP_csv <- function(file) {
                                "actual_date", "session_date", "time", "scientific_name", "english_name",
                                "group", "warnings", "classifier_code"))) {
       type <- 'offline'
-      names(dat)[which(names(dat)=='filename')] <- 'original.file.name'
+      names(dat)[which(names(dat)=='filename')] <- 'file2move'
       names(dat)[which(names(dat)=='group')] <- 'species.group'
       names(dat)[which(names(dat)=='session_date')] <- 'survey.date'
       names(dat) <- gsub("_", ".", names(dat))
@@ -74,17 +74,36 @@ read_AP_csv <- function(file) {
   #cloud file format1 - should have 19 columns
   if(length(names(dat)) == 19) {
     cat(file=stderr(), "Reading cloud1 format file\n")
-    if(all.equal(names(dat), c("recording.file.name", "original.file.name", "original.file.part",
+    if(all.equal(names(dat), c("recording.file.name", "original.file.nam", "original.file.part",
                                "latitude", "longitude", "species", "scientific.name",
                                "english.name", "species.group", "probability", "warnings",
                                "actual.date", "survey.date", "time", "classifier.name",
                                "user.id", "upload.key", "upload.name", "survey.name"))) {
+      names(dat)[which(names(dat)=='original.file.name')] <- 'file2move'
       dat$location <- paste(dat$latitude, dat$longitude, sep='~')
       type <- 'cloud1'
     }
   }
-  
-  
+  #audible file format - should have 20 columns
+  if(length(names(dat)) == 20) {
+    cat(file=stderr(), "Reading audible cloud1 format file\n")
+    if(all.equal(names(dat), c("recording.file.name", "original.file.name", "original.file.part",
+                               "latitude", "longitude", "species", "scientific.name",
+                               "english.name", "species.group", "score", "warnings", "call.type",
+                               "actual.date", "survey.date", "time", "classifier.name",
+                               "user.id", "upload.key", "batch.name", "project.name"))) {
+      names(dat)[which(names(dat)=='recording.file.name')] <- 'file2move'
+      dat$file2move <- paste0(dat$file2move, '.wav')
+      dat$location <- paste(dat$latitude, dat$longitude, sep='~')
+      dat$english.name <- ifelse(!is.na(dat$call.type), paste0(dat$english.name, " (", dat$call.type, ")"), dat$english.name)
+      dat$species.group <- ifelse(is.na(dat$species.group), 'Birds', dat$species.group)
+      dat$call.type <- NULL
+      
+      names(dat)[which(names(dat)=='score')] <- 'probability'
+      type <- 'audible'
+    }
+  }
+                                
   #error if file is not an expected format for a Pipeline results file
   if(is.na(type)) {
     shinyalert(title = "Error",
@@ -166,7 +185,7 @@ get_results <- function(files) {
         #potentially returning multiple hits for the whole file and causing undue duplication
         #in audit
         cat(file=stderr(), "No. rows in dat BEFORE picking highest probability per file*species:", nrow(detections), "\n")
-        detections <- aggregate(data = detections, probability ~ original.file.name + species.group + english.name + species + location + survey.date, max)
+        detections <- aggregate(data = detections, probability ~ file2move + species.group + english.name + species + location + survey.date, max)
         cat(file=stderr(), "No. rows in dat AFTER picking highest probability per file*species:", nrow(detections), "\n")
         metrics$num_detections_after_aggregation <- nrow(detections)
         #for similar reasons, it is possible to get a "No ID" return for a file section 
@@ -177,7 +196,7 @@ get_results <- function(files) {
         if(nrow(noid) > 0) {
           id <- subset(detections, species != 'No ID')
           cat(file=stderr() , "No. NoID detections before checking for IDs in same file:", nrow(noid), "\n")
-          noid <- noid[!noid$original.file.name %in% id$original.file.name,]
+          noid <- noid[!noid$file2move %in% id$file2move,]
           cat(file=stderr() , "No. NoID detections AFTER checking for IDs in same file:", nrow(noid), "\n")
           metrics$num_rows_noid_after_check <- nrow(noid)
           detections <- rbind(id, noid)
@@ -358,7 +377,7 @@ prep_copy_files <- function(dat, input, p, sampsize_noid, sampsize_random, samps
   }
   
   #get number of unique files * species permutations to copy - individual files could have more than one species etc
-  file_by_spp <- unique(files_to_copy[,c("original.file.name", "species", "dir")])
+  file_by_spp <- unique(files_to_copy[,c("file2move", "species", "dir")])
   cat(file = stderr(), nrow(file_by_spp), "\n")
   
   #get list of all audio files in folder
@@ -373,7 +392,7 @@ prep_copy_files <- function(dat, input, p, sampsize_noid, sampsize_random, samps
 
   #merge with list of wavs to copy
   wavs_to_copy <- merge(all_wavs, file_by_spp, 
-                        by.x = "file", by.y = "original.file.name", all.y = TRUE)
+                        by.x = "file", by.y = "file2move", all.y = TRUE)
   
 
   return(wavs_to_copy)
@@ -494,7 +513,7 @@ analyse_batlogger_files <- function(path_to_process, files_old) {
       this_file_old <- files_old[f]
       
       #check if GUANO available for renaming
-      guano <- guano::read.guano(file.path(path_to_process, this_file_old))
+      guano <- read.guano(file.path(path_to_process, this_file_old))
       
       #if GUANO extracted...
       if(length(guano) != 0) {
@@ -661,6 +680,148 @@ audit_audio <- function(path) {
 }
 
 
+# GUANO metadata package for R
+# from https://github.com/riggsd/guano-r/blob/master/guano/R/guano.R
+# Accessed: 22/09/2023
+# Licencs: MIT.
+
+#' Convert ISO 8601 timestamps into strings - IGNORE TIMEZONE FOR THIS PURPOSE
+.parse.timestamp <- function(s) {
+  #check and replace space for T between date and time - ISO deviation in some WA recorders
+  if(gregexpr(" ",s)[[1]][1]==11) {
+    s <- gsub(" ","T",s)
+  }
+  return(strptime(s, "%Y-%m-%dT%H:%M:%S"))
+}
+
+
+#' THIS version attempts to fix the poor formating of WA metadata but still some issues with tz conversion
+#' Parse ISO 8601 subset timestamps
+#' .parse.timestamp <- function(s) {
+#'   #check and replace space for T between date and time - ISO deviation in some WA recorders
+#'   if(gregexpr(" ",s)[[1]][1]==11) {
+#'     s <- gsub(" ","T",s)
+#'   }
+#'   
+#'   #UTC times
+#'   if (is.null(s) || is.na(s) || s == "") {
+#'     return(NA)
+#'   } else if (endsWith(s, "Z")) {
+#'     return(strptime(s, "%Y-%m-%dT%H:%M:%S", tz="UTC"))
+#'   
+#'   # UTC offset
+#'   } else if (length(gregexpr(":", s)[[1]]) == 3) {
+#'     len <- nchar(s)
+#'     #ORIGINAL utc_offset <- strtoi(substr(s, len-5, len-3), base=10)      # UTC offset hours, eg: 4
+#'     #get timestamp component by looking for +/-
+#'     if(length(gregexpr("-",s)[[1]])==3) {
+#'       utc_offset <- strtoi(substr(s, gregexpr("-",s)[[1]][3], len-3), base=10)
+#'     }
+#'     if(grep("+",s, fixed=TRUE) == 1) {
+#'       utc_offset <- strtoi(substr(s, gregexpr("+",s, fixed=TRUE)[[1]][1], len-3), base=10)
+#'     }
+#'     tz <- paste("Etc/GMT", sprintf("%+d", utc_offset), sep="")  # timezone, eg: "Etc/GMT+4"
+#'     return(strptime(s, "%Y-%m-%dT%H:%M:%S", tz=tz))
+#'   
+#'   # local
+#'   } else {
+#'     return(strptime(s, "%Y-%m-%dT%H:%M:%S"))
+#'   }
+#' }
+
+
+
+#' Maps metadata keys to a data type coercion function
+data.types <- list(
+  `Filter HP`=as.double,
+  `Filter LP`=as.double,
+  Humidity=as.double,
+  Length=as.double,
+  `Loc Accuracy`=as.integer,
+  `Loc Elevation`=as.double,
+  Note=function(val) gsub("\\\\n", "\n", val),
+  Samplerate=as.integer,
+  #`Species Auto ID`=?, `Species Manual ID`=?,  # TODO: comma separated
+  #Tags=?,  # TODO: comma separated
+  TE=function(val) if (is.na(val) || is.null(val) || val == "") 1 else as.integer(val),
+  `Temperature Ext`=as.double, `Temperature Int`=as.double,
+  Timestamp=.parse.timestamp
+)
+
+
+#' Read a single GUANO file
+#' 
+#' @param filename The GUANO filename or path
+#' @param verbose Whether to print the raw GUANO lines before parsing data types
+#' @return list of named metadata fields
+read.guano <- function(filename, verbose = FALSE) {
+  f <- file(filename, "rb")
+  riff.id <- readChar(f, 4)
+  if (length(riff.id) == 0 || riff.id != "RIFF") return(NULL)
+  riff.size <- readBin(f, integer(), size=4, endian="little")
+  wave.id <- readChar(f, 4)  # "WAVE"
+  if (length(wave.id) == 0 || wave.id != "WAVE") return(NULL)
+  
+  read.subchunk <- function() {
+    id <- readChar(f, 4)
+    if (length(id) == 0 || id == "") return(NULL)
+    size <- readBin(f, integer(), size=4, endian="little")
+    list(id=id, size=size)
+  }
+  
+  skip.subchunk <- function(chunk) {
+    #print(sprintf("Skipping subchunk '%s' ...", chunk$id))
+    pos <- seek(f, NA)
+    seek(f, pos + chunk$size)
+  }
+  
+  md <- list()
+  
+  while (!is.null(chunk <- read.subchunk())) {
+    if (chunk$id != "guan") {
+      skip.subchunk(chunk)
+      next
+    }
+    md[["File Path"]] <- normalizePath(filename)
+    md[["File Name"]] <- basename(filename)
+    md.txt <- readChar(f, chunk$size)
+    Encoding(md.txt) <- "UTF-8"  # FIXME: this still isn't setting the encoding to UTF-8
+    for (line in strsplit(md.txt, "\n")[[1]]) {
+      line <- trimws(line)
+      if (line == "") {
+        next
+      }
+      if(verbose == TRUE) print(line)
+      toks <- strsplit(sub(":", "\n", line), "\n")
+      key <- trimws(toks[[1]][1])
+      val <- trimws(toks[[1]][2])
+      if (is.na(key) || is.null(key) || key == "") {
+        next
+      }
+      if (!is.null(data.types[[key]])) {
+        val <- data.types[[key]](val)
+      }
+      md[[key]] <- val
+    }
+    if ("Loc Position" %in% names(md)) {
+      coords <- lapply(strsplit(md[["Loc Position"]], " "), as.double)[[1]]
+      md[["Loc Position Lat"]] <- coords[1]
+      md[["Loc Position Lon"]] <- coords[2]
+      md[["Loc Position"]] <- NULL
+    }
+  }
+  
+  close(f)
+  return(md)
+}
+
+
+
+
+
+
+
+
 #' THE SHINY PART -------------------------------------------------------------------------------
 
 #passed parameters
@@ -692,7 +853,7 @@ ui <- fluidPage(
   
   # Application title
   titlePanel(windowTitle = "BTO Acoustic Pipeline Tools",
-             title = div(img(src="APlogo100px.png"), "BTO Acoustic Pipeline Tools", style="font-size:100px; color: #31566d;")),
+             title = div(img(src="APlogo100px.png"), "BTO Acoustic Pipeline Tools (version 1.1)", style="font-size:100px; color: #31566d;")),
   
   tabsetPanel(
     tabPanel("Welcome", fluid = TRUE,
@@ -817,7 +978,7 @@ ui <- fluidPage(
              
       sidebarPanel(
         h4("Purpose"),
-        tags$p("This utility is to assist and save users time when auditing 
+        tags$p("This utility is to save users time when auditing 
                 identifications provided by the BTO Acoustic Pipeline. The utility can be 
                 configured to copying wav files into folders according to the species 
                 identified in each sound file (as detailed in the Pipeline results csv file). 
@@ -826,7 +987,7 @@ ui <- fluidPage(
                 a random samples. The last option is useful for very common species and noise
                 (No ID) classes and allows the calculation of identification error rates for the 
                 random sample: a low error rate from the random sample may justify not checking 
-               all clips for common species."),
+                all clips for common species."),
         tags$br(),
         tags$br(),
         
