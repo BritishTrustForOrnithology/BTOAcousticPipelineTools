@@ -14,7 +14,7 @@ An R Shiny App to help with auditing audio recordings processed with the BTO Aco
 
 You will need R installed on your computer. We have tested the app on R versions 3.6.1 and 4.2. You do not need to have RStudio installed but if you are familiar with it this may be an easier way to run the code.
 
-You will need the following R packages installed. If you are not familiar with installing R packages we have provided a configuration program (see below). You will only need to run this once. Required packages = shiny, shinyAlert, shinyFiles, shinyjs, devtools, tidyr, DT and guano. Note that guano needs to be installed from Github; the rest can be installed from CRAN (see below).
+You will need the following R packages installed. If you are not familiar with installing R packages we have provided a configuration program (see below). You will only need to run this once. Required packages = shiny, shinyAlert, shinyFiles, shinyjs, devtools, tidyr, DT.
 
 
 ## Installation
@@ -30,6 +30,11 @@ You will need the following R packages installed. If you are not familiar with i
 * *Do not directly run 'app.R'.* Instead, with R/RStudio open, open the script file called 'launch_shiny_app.R'. Follow the instructions there, in particular noting the need to update the path_to_app line to say where you have saved the 'app.R' file. 
 * For most uses this is the only change you will need to make. For very large validation jobs (e.g. for a batch of >100,000 wav files) it may be more efficient to pass the paths to the audio and output directories, which can be done by adding these to the shinyOptions command as detailed in 'launch_shiny_app.R'.
 * Running the 'launch_shiny_app.R' will open the app in a new browser window.
+
+
+## Change Log
+
+22/09/2023 - removed dependency on guano-r as a) this does not always install easily for new users and b) this does not parse Wildlife Acoustics GUANO metadata properly. Now custom functions based on guano-r are included within the Shiny app code.
 
 
 ## Issues
