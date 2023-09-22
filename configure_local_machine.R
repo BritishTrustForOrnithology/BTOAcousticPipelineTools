@@ -22,9 +22,4 @@ install_packages <- function(packages) {
 }
 
 #get CRAN packages
-install_packages(packages = c("shiny", "shinyFiles", "shinyalert", "shinyjs", "devtools", "tidyr", "DT")) 
-
-#get GUANO - needed for accessing GUANO metadata
-if(!('guano' %in% installed.packages()[, "Package"])) {
-  devtools::install_github("riggsd/guano-r", subdir="guano")
-}
+install_packages(packages = c("shiny", "shinyFiles", "shinyalert", "shinyjs", "devtools", "tidyr", "DT") )
