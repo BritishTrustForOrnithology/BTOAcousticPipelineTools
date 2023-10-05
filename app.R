@@ -74,7 +74,7 @@ read_AP_csv <- function(file) {
   #cloud file format1 - should have 19 columns
   if(length(names(dat)) == 19) {
     cat(file=stderr(), "Reading cloud1 format file\n")
-    if(all.equal(names(dat), c("recording.file.name", "original.file.nam", "original.file.part",
+    if(all.equal(names(dat), c("recording.file.name", "original.file.name", "original.file.part",
                                "latitude", "longitude", "species", "scientific.name",
                                "english.name", "species.group", "probability", "warnings",
                                "actual.date", "survey.date", "time", "classifier.name",
