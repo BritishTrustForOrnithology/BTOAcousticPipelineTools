@@ -57,13 +57,18 @@ read_AP_csv <- function(file) {
   
   #which format of file is this?
   type <- NA
+  if(length(names(dat)) == 13) type <- 'offline_ultrasonic'
+  if(length(names(dat)) == 19) type <- 'online_ultrasonic'
+  if(length(names(dat)) == 20) type <- 'online_audible'
+  
+  
+  
   #offline file format - should have 13 columns
-  if(length(names(dat)) == 13) {
+  if(type == 'offline_ultrasonic') {
     cat(file=stderr(), "Reading offline format file\n")
     if(all.equal(names(dat), c("upload_directory", "filename", "prefix", "species", "probability",
                                "actual_date", "session_date", "time", "scientific_name", "english_name",
                                "group", "warnings", "classifier_code"))) {
-      type <- 'offline'
       names(dat)[which(names(dat)=='filename')] <- 'file2move'
       names(dat)[which(names(dat)=='group')] <- 'species.group'
       names(dat)[which(names(dat)=='session_date')] <- 'survey.date'
@@ -72,7 +77,7 @@ read_AP_csv <- function(file) {
     }
   }
   #cloud file format1 - should have 19 columns
-  if(length(names(dat)) == 19) {
+  if(type == 'online_ultrasonic') {
     cat(file=stderr(), "Reading cloud1 format file\n")
     if(all.equal(names(dat), c("recording.file.name", "original.file.name", "original.file.part",
                                "latitude", "longitude", "species", "scientific.name",
@@ -81,11 +86,10 @@ read_AP_csv <- function(file) {
                                "user.id", "upload.key", "upload.name", "survey.name"))) {
       names(dat)[which(names(dat)=='original.file.name')] <- 'file2move'
       dat$location <- paste(dat$latitude, dat$longitude, sep='~')
-      type <- 'cloud1'
     }
   }
   #audible file format - should have 20 columns
-  if(length(names(dat)) == 20) {
+  if(type == 'online_audible') {
     cat(file=stderr(), "Reading audible cloud1 format file\n")
     if(all.equal(names(dat), c("recording.file.name", "original.file.name", "original.file.part",
                                "latitude", "longitude", "species", "scientific.name",
@@ -100,7 +104,6 @@ read_AP_csv <- function(file) {
       dat$call.type <- NULL
       
       names(dat)[which(names(dat)=='score')] <- 'probability'
-      type <- 'audible'
     }
   }
                                 
@@ -853,7 +856,7 @@ ui <- fluidPage(
   
   # Application title
   titlePanel(windowTitle = "BTO Acoustic Pipeline Tools",
-             title = div(img(src="APlogo100px.png"), "BTO Acoustic Pipeline Tools (version 1.1)", style="font-size:100px; color: #31566d;")),
+             title = div(img(src="APlogo100px.png"), "BTO Acoustic Pipeline Tools (v.1.1)", style="font-size:100px; color: #31566d;")),
   
   tabsetPanel(
     tabPanel("Welcome", fluid = TRUE,
