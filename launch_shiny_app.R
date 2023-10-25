@@ -10,7 +10,7 @@
 #'     are processing a very large volume of files (>100,000) it is sometimes 
 #'     more efficient to pass the full path to the audio files and to the output 
 #'     location at start-up, e.g.:
-#'     shinyOptions(path_audio='C:/recordings/2022', path_output='C:/checking/2022')
+#'     shiny::shinyOptions(path_audio='C:/recordings/2022', path_output='C:/checking/2022')
 #'     Remember to reset these to =NULL before next running.
 #'
 #'  4. Run all command lines and the app will launch in a browser winder.
