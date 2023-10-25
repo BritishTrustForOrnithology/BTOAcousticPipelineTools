@@ -55,56 +55,87 @@ read_AP_csv <- function(file) {
   #otherwise continue
   names(dat) <- tolower(names(dat))
   
+  #standardise some names
+  names(dat)[which(names(dat)=='score')] <- 'probability'
+  
   #which format of file is this?
   type <- NA
-  if(length(names(dat)) == 13) type <- 'offline_ultrasonic'
-  if(length(names(dat)) == 19) type <- 'online_ultrasonic'
-  if(length(names(dat)) == 20) type <- 'online_audible'
-  
-  
-  
-  #offline file format - should have 13 columns
-  if(type == 'offline_ultrasonic') {
-    cat(file=stderr(), "Reading offline format file\n")
-    if(all.equal(names(dat), c("upload_directory", "filename", "prefix", "species", "probability",
-                               "actual_date", "session_date", "time", "scientific_name", "english_name",
-                               "group", "warnings", "classifier_code"))) {
-      names(dat)[which(names(dat)=='filename')] <- 'file2move'
-      names(dat)[which(names(dat)=='group')] <- 'species.group'
-      names(dat)[which(names(dat)=='session_date')] <- 'survey.date'
-      names(dat) <- gsub("_", ".", names(dat))
-      dat$location <- dat$prefix
-    }
+  if(length(names(dat)) == 13) {
+    type <- 'offline'
   }
-  #cloud file format1 - should have 19 columns
-  if(type == 'online_ultrasonic') {
-    cat(file=stderr(), "Reading cloud1 format file\n")
-    if(all.equal(names(dat), c("recording.file.name", "original.file.name", "original.file.part",
-                               "latitude", "longitude", "species", "scientific.name",
-                               "english.name", "species.group", "probability", "warnings",
-                               "actual.date", "survey.date", "time", "classifier.name",
-                               "user.id", "upload.key", "upload.name", "survey.name"))) {
-      names(dat)[which(names(dat)=='original.file.name')] <- 'file2move'
-      dat$location <- paste(dat$latitude, dat$longitude, sep='~')
-    }
+  if(length(names(dat)) == 19) {
+    type <- 'old_bat'
+  }  
+  if(length(names(dat)) == 20) {
+    type <- ifelse(substr(dat$classifier.name[1],1,7)=='Classif', 'new_bat', 'new_bird')
   }
-  #audible file format - should have 20 columns
-  if(type == 'online_audible') {
-    cat(file=stderr(), "Reading audible cloud1 format file\n")
-    if(all.equal(names(dat), c("recording.file.name", "original.file.name", "original.file.part",
-                               "latitude", "longitude", "species", "scientific.name",
-                               "english.name", "species.group", "score", "warnings", "call.type",
-                               "actual.date", "survey.date", "time", "classifier.name",
-                               "user.id", "upload.key", "batch.name", "project.name"))) {
-      names(dat)[which(names(dat)=='recording.file.name')] <- 'file2move'
-      dat$file2move <- paste0(dat$file2move, '.wav')
-      dat$location <- paste(dat$latitude, dat$longitude, sep='~')
-      dat$english.name <- ifelse(!is.na(dat$call.type), paste0(dat$english.name, " (", dat$call.type, ")"), dat$english.name)
-      dat$species.group <- ifelse(is.na(dat$species.group), 'Birds', dat$species.group)
-      dat$call.type <- NULL
-      
-      names(dat)[which(names(dat)=='score')] <- 'probability'
+
+  #standardise the different input formats for downstream use
+  #offline file format
+  if(type == 'offline') {
+    cat(file=stderr(), "Trying OFFLINE format file\n")
+    expnames <- "upload_directory,filename,prefix,species,probability,actual_date,session_date,time,scientific_name,english_name,group,warnings,classifier_code"
+    if(expnames != paste(names(dat), collapse=',')) {
+      msg <- paste0('Unexpected OFFLINE file format. \nExpected: ',expnames,'\nGot: ', paste(names(dat), collapse=','))
+      stop(msg)
     }
+    names(dat)[which(names(dat)=='filename')] <- 'file2move'
+    names(dat)[which(names(dat)=='group')] <- 'species.group'
+    names(dat)[which(names(dat)=='session_date')] <- 'survey.date'
+    names(dat)[which(names(dat)=='scientific_name')] <- 'scientific.name'
+    names(dat)[which(names(dat)=='english_name')] <- 'english.name'
+    names(dat) <- gsub("_", ".", names(dat))
+    dat$location <- dat$prefix
+    #drop redundant columns
+    dat <- subset(dat, select=c('file2move', 'location', 'survey.date','species', 'scientific.name', 'english.name', 'species.group', 'probability'))
+    cat(file=stderr(), "Success reading OFFLINE format file\n")
+  }
+  
+  #old online bat version pre-release of bird app (October 2023)
+  if(type == 'old_bat') {
+    cat(file=stderr(), "Trying OLD BAT format file\n")
+    expnames <- "recording.file.name,original.file.name,original.file.part,latitude,longitude,species,scientific.name,english.name,species.group,probability,warnings,actual.date,survey.date,time,classifier.name,user.id,upload.key,upload.name,survey.name"
+    if(expnames != paste(names(dat), collapse=',')) {
+      msg <- paste0('Unexpected OLD BAT file format. \nExpected: ',expnames,'\nGot: ', paste(names(dat), collapse=','))
+      stop(msg)
+    }
+    names(dat)[which(names(dat)=='original.file.name')] <- 'file2move'
+    dat$location <- paste(dat$latitude, dat$longitude, sep='~')
+    #drop redundant columns
+    dat <- subset(dat, select=c('file2move', 'location', 'survey.date','species', 'scientific.name', 'english.name', 'species.group', 'probability'))
+    cat(file=stderr(), "Success reading OLD BAT format file\n")
+  }
+  
+  #new bat version
+  if(type == 'new_bat') {
+    cat(file=stderr(), "Trying ULTRASONIC format file\n")
+    expnames <- "recording.file.name,original.file.name,original.file.part,latitude,longitude,species,scientific.name,english.name,species.group,probability,warnings,call.type,actual.date,survey.date,time,classifier.name,user.id,upload.key,batch.name,project.name"
+    if(expnames != paste(names(dat), collapse=',')) {
+      msg <- paste0('Unexpected ULTRASONIC file format. \nExpected: ',expnames,'\nGot: ', paste(names(dat), collapse=','))
+      stop(msg)
+    }
+    names(dat)[which(names(dat)=='original.file.name')] <- 'file2move'
+    dat$location <- paste(dat$latitude, dat$longitude, sep='~')
+    dat$english.name <- ifelse(!is.na(dat$call.type), paste0(dat$english.name, " (", dat$call.type, ")"), dat$english.name)
+    #drop redundant columns
+    dat <- subset(dat, select=c('file2move', 'location', 'survey.date','species', 'scientific.name', 'english.name', 'species.group', 'probability'))
+    cat(file=stderr(), "Success reading ULTRASONIC format file\n")
+  }
+  #new bird version
+  if(type == 'new_bird') {
+    cat(file=stderr(), "Trying AUDIBLE format file\n")
+    expnames <- "recording.file.name,original.file.name,original.file.part,latitude,longitude,species,scientific.name,english.name,species.group,probability,warnings,call.type,actual.date,survey.date,time,classifier.name,user.id,upload.key,batch.name,project.name"
+    if(expnames != paste(names(dat), collapse=',')) {
+      msg <- paste0('Unexpected AUDIBLE file format. \nExpected: ',expnames,'\nGot: ', paste(names(dat), collapse=','))
+      stop(msg)
+    }
+    names(dat)[which(names(dat)=='recording.file.name')] <- 'file2move'
+    dat$file2move <- paste0(dat$file2move, '.wav')
+    dat$location <- paste(dat$latitude, dat$longitude, sep='~')
+    dat$english.name <- ifelse(!is.na(dat$call.type), paste0(dat$english.name, " (", dat$call.type, ")"), dat$english.name)
+    #drop redundant columns
+    dat <- subset(dat, select=c('file2move', 'location', 'survey.date','species', 'scientific.name', 'english.name', 'species.group', 'probability'))
+    cat(file=stderr(), "Success reading AUDIBLE format file\n")
   }
                                 
   #error if file is not an expected format for a Pipeline results file
