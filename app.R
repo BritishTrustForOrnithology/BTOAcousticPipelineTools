@@ -852,11 +852,20 @@ read.guano <- function(filename, verbose = FALSE) {
 
 #' Compare local version with current version on Github
 #' @details Throw an error if the local version is different to the web version.
-version_check <- function() {
-  tryweb <- tryCatch(version_web <- read.csv(url("https://raw.githubusercontent.com/BritishTrustForOrnithology/BTOAcousticPipelineTools/main/versionx.txt")),
-                silent=TRUE)
-  version_local <- read.csv('version.txt')
-  if(version_web$version != version_local$version) stop("You are not running the latest version of the app. Certain features may no longer work. Please remove this version and reinstall from https://github.com/BritishTrustForOrnithology/BTOAcousticPipelineTools")
+version_check <- function(path_to_app) {
+  version_local <- tryCatch(
+    {
+      # Attempt to open the file
+      file_content <- read.csv(url("https://raw.githubusercontent.com/BritishTrustForOrnithology/BTOAcousticPipelineTools/main/version.txt"))
+    },
+    error = function(e) {
+      # Handle the error (e.g., file not found)
+      print("Error: cannot access the version file on the web")
+    }
+  )
+  version_local <- read.csv(file.path(dirname(path_to_app),'version.txt'))
+  if(version_web$version != version_local$version) stop("You are not running the latest version of the app. You are advised to stop as certain features may no longer work. Please remove this version and reinstall from https://github.com/BritishTrustForOrnithology/BTOAcousticPipelineTools")
+  if(version_web$version == version_local$version) cat("Success! You are running the latest version of the app. Please continue.\n")  
 }
 
 
@@ -868,6 +877,7 @@ passed_path_output <- getShinyOption('path_output', default = NULL)
 
 #constants
 credit <- 'App written by Simon Gillings, BTO'
+version <- read.csv(file.path(dirname(path_to_app),'version.txt'))
 
 #get the drive letters
 volumes <- getVolumes()()
@@ -891,7 +901,7 @@ ui <- fluidPage(
   
   # Application title
   titlePanel(windowTitle = "BTO Acoustic Pipeline Tools",
-             title = div(img(src="APlogo100px.png"), "BTO Acoustic Pipeline Tools (v.1.1)", style="font-size:100px; color: #31566d;")),
+             title = div(img(src="APlogo100px.png"), paste0("BTO Acoustic Pipeline Tools (v.",version,")"), style="font-size:100px; color: #31566d;")),
   
   tabsetPanel(
     tabPanel("Welcome", fluid = TRUE,
