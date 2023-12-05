@@ -18,6 +18,10 @@
 #path to where app is saved on your machine- update if necessary
 path_to_app <- 'app.R'
 
+#check this version is up to date
+version_check(path_to_app)
+
+
 #run the app
 shiny::shinyOptions(path_audio=NULL, path_output=NULL)
 shiny::runApp(path_to_app, launch.browser = TRUE)
