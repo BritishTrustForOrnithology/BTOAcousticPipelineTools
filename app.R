@@ -850,10 +850,14 @@ read.guano <- function(filename, verbose = FALSE) {
 }
 
 
-
-
-
-
+#' Compare local version with current version on Github
+#' @details Throw an error if the local version is different to the web version.
+version_check <- function() {
+  tryweb <- tryCatch(version_web <- read.csv(url("https://raw.githubusercontent.com/BritishTrustForOrnithology/BTOAcousticPipelineTools/main/versionx.txt")),
+                silent=TRUE)
+  version_local <- read.csv('version.txt')
+  if(version_web$version != version_local$version) stop("You are not running the latest version of the app. Certain features may no longer work. Please remove this version and reinstall from https://github.com/BritishTrustForOrnithology/BTOAcousticPipelineTools")
+}
 
 
 #' THE SHINY PART -------------------------------------------------------------------------------
