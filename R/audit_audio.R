@@ -93,7 +93,7 @@ audit_audio <- function(path_to_process, files_old) {
     dt_mismatch <- ifelse(!is.na(dt_guano) & !is.na(dt_xml) & dt_guano != dt_xml, 1, dt_mismatch)
 
     #can the file be processed?
-    #ie does it have a safe filename and/or guano?
+    #ie does it have a safe filename and/or a guano date?
     success <- ifelse(filename_fail == 0 | !is.na(dt_guano), 1, 0)
     
     
@@ -103,6 +103,8 @@ audit_audio <- function(path_to_process, files_old) {
     renamable <- ifelse(!is.na(dt_guano) | !is.na(dt_xml), 1, 0)
     renamable <- ifelse(dt_mismatch == 1, 0, renamable)
 
+    #can the file not be renamed?
+    unrenamable <- 1-renamable
     
     #if the file needs renaming, and can be renamed based on data, create newname
     newname <- NA
@@ -111,42 +113,63 @@ audit_audio <- function(path_to_process, files_old) {
       newname <- file.path(this_dirname, paste0(dt2use,"_",this_file))
     }
     
-    unrenamable <- 1-renamable
     
     
-    outs[[f]] <- data.frame(wav = this_wav, dir = this_dirname, filename_fail,
-                      has_guano, dt_guano, lat_guano, lon_guano, 
-                      has_xml, dt_xml, 
-                      dt_mismatch, renamable, newname, unrenamable)
-    rm(list=c('this_wav', 'this_dirname', 'filename_fail', 'has_guano', 'dt_guano', 'lat_guano', 'lon_guano', 
+    outs[[f]] <- data.frame(original_name = this_wav, 
+                            directory = this_dirname, 
+                            success = success, 
+                            filename_fail,
+                            has_guano, 
+                            dt_guano, 
+                            lat_guano, 
+                            lon_guano,
+                            has_xml, 
+                            dt_xml,
+                            dt_mismatch, 
+                            renamable, 
+                            new_name = newname, 
+                            unrenamable)
+    rm(list=c('this_wav', 'this_dirname', 'filename_fail', 'success', 'has_guano', 'dt_guano', 'lat_guano', 'lon_guano', 
               'has_xml', 'dt_xml', 'dt_agree', 'renamable', 'newname', 'dt', 'this_guano', 'datetime_value', 'dt2use', 'unrenamable'))
     
   } #end file iteration loop
   #unpack
   file_data <- do.call(rbind, outs)
+  file_data$nfiles <- 1 #dummy var to count fils
   
   #get summary stats for each folder
-  summary_per_dir <- aggregate(data = file_data, cbind(filename_fail, has_guano, has_xml, renamable, unrenamable) ~ dir, sum)
+  summary_per_dir <- aggregate(data = file_data, cbind(nfiles, filename_fail, success, has_guano, has_xml, renamable, unrenamable) ~ directory, sum)
   
   #headline stats
   n_files <- length(files_old)
-
   n_dirs <- nrow(summary_per_dir)
+  
+  #how many of the original files can be processed immediately?
+  n_ok_to_process <- sum(file_data$success)
+  
+  #are they all OK?
+  all_ok <- ifelse(n_ok_to_process == n_files, TRUE, FALSE)
     
-  #how many of the original filenames will be duplicates?
+  #how many of the original filenames are duplicates?
   n_duplicated_oldnames <- sum(duplicated(basename(files_old)))
   
   #how many of the new filenames will be duplicates?
-  n_duplicated_newnames <- sum(duplicated(file_data$newname))
+  n_duplicated_newnames <- sum(duplicated(file_data$new_name))
   
   #how many need renaming?
-  n_need_renaming <- sum(file_data$filename_fail)
+  n_need_renaming <- n_files - n_ok_to_process
   
   #how many can't be renamed?
   n_cannot_rename <- sum(file_data$unrenamable)
   
+  #allow renaming only if no files that can't be renamed, no duplicates will be generated
+  allow_rename <- ifelse(n_cannot_rename == 0 & n_duplicated_newnames == 0, TRUE, FALSE)
+  
   output <- list(n_files = n_files,
                  n_dirs = n_dirs,
+                 all_ok = all_ok,
+                 allow_rename = allow_rename,
+                 n_ok_to_process = n_ok_to_process,
                  n_need_renaming = n_need_renaming,
                  n_cannot_rename = n_cannot_rename,
                  n_duplicated_oldnames = n_duplicated_oldnames,
