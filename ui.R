@@ -60,38 +60,58 @@ ui <- fluidPage(
              tags$br(),
              tags$br(),
              tags$br(),
-             h6('Version 1.1, August 2022'),
+             h6(paste0('Version ', version, ', December 2023')),
              h6(credit)
     ),
     
     tabPanel("Preprocessing", fluid = TRUE,
              sidebarPanel(
-               h4("Purpose"),
-               tags$p("Preprocessing check for common problems. Includes checking for file names that fail Pipeline requirements and whether embedded GUANO or XML files can be used to produce new unique filenames."),
+               h4("Preprocessing check for common problems"),
+               tags$p("This preprocessing step checks whether file names are compatible with the 
+               Acoustic Pipeline and whether embedded GUANO or XML metadata can be used to rename files.
+               This is especially useful for Batlogger wav files which are numbered sequentially. 
+               If using more than one detector it is possible to have multiple files of the same name. 
+               Non-unique wav files can be problematic when it comes to auditing the results/recordings. This 
+              utility wav files to be renamed if GUANO or XML metadata include the date/time of the recording. 
+              In addition to renaming recordings, a log (csv file) is exported 
+              containing any GUANO or XML content that the files contain. We recommend that users 
+              with Batloggers do this before uploading recordings to the Pipeline. This utility 
+              may be useful for renaming wav files from other makes and models of bat detector, 
+              or to export GUANO metadata from wav files."),
+               tags$p("Please note, this utility will rename your original audio files. Monitor the warning messages carefully to ensure it is doing what you want.", style = "color: red"),
                tags$br(),
-               
-               tags$div(id = "audit1", 
-                        h4("Step 1: Select audio folder"),
-                        tags$p("You can select a folder with subfolders for these checks but note that the Pipeline App (ultrasonic) only allows processing of single folders (no subfolders)."),
-                        tags$p("Hint: Only use left side of popup to navigate to folder", style = "color: red;"),
-                        shinyDirButton(id = 'dir_audioaudit',
-                                       label = 'Select folder',
-                                       title = 'Select folder containing Batlogger audio files',
-                                       class = "btn-primary"),
-                        verbatimTextOutput("path_audioaudit", placeholder = TRUE),
-                        actionButton("scan_for_audio", "Scan for audio files", class = "btn-success"),
+
+               tags$div(
+                 id = "audit1", 
+                 h4("Step 1: Select audio folder"),
+                 tags$p("You can select a folder with subfolders for these checks but note that the Pipeline App (ultrasonic) only allows processing of single folders (no subfolders)."),
+                 tags$p("Hint: Only use left side of popup to navigate to folder", style = "color: red;"),
+                 shinyDirButton(id = 'dir_audioaudit',
+                                label = 'Select folder',
+                                title = 'Select folder containing Batlogger audio files',
+                                class = "btn-primary"),
+                 verbatimTextOutput("path_audioaudit", placeholder = TRUE),
+                 actionButton("scan_for_audio", "Scan for audio files", class = "btn-success")
                ),
-               tags$br(),
                
-               tags$div(id = "audit2", 
-                        h4("Step 2: Analyse files"),
-                        tags$p("Analyse the files for GUANO metadata and XML files, suggest new file names and check for duplication issues."),
-                        tags$p("Hint: analysis will include subfolders if present", style = "color: red;"),
-                        actionButton("analyse_audio", "Analyse audio files", class = "btn-success")
+               tags$div(
+                 id = "audit2", 
+                 hr(style="border-color: grey;"),
+                 h4("Step 2: Analyse files"),
+                 tags$p("Analyse the files for GUANO metadata and XML files, suggest new file names and check for duplication issues."),
+                 tags$p("Hint: analysis will include subfolders if present", style = "color: red;"),
+                 actionButton("analyse_audio", "Analyse audio files", class = "btn-success")
                ),
-               tags$br(),
-               hr(style="border-color: grey;"),
-               tags$br(),
+               
+               tags$div(
+                 id = "audit3",
+                 hr(style="border-color: grey;"),
+                 h4("Step 3: Rename files"),
+                 tags$p("Warning: Clicking the following button will change audio filenames in the selected folders. Proceed with caution", style = "color: DarkOrange;"),
+                 actionButton("rename_audio", "Rename audio files", class = "btn-success"),
+                 tags$br(),
+                 actionButton("exit3", "Close App", class = "btn-danger", onclick = "setTimeout(function(){window.close();},500);")
+               )
              ),
              mainPanel(
                tags$div(id = 'batch_summary',
@@ -99,9 +119,12 @@ ui <- fluidPage(
                  textOutput("audit_file_count"),
                  textOutput("audit_dir_count"),
                  tags$br(),
+                 textOutput('audit_corrupt_files'),
+                 tags$br(),
                  textOutput('audit_filename_status'),
                  tags$br(),
                  tags$h4("Diagnostics by folder"),
+                 tags$p('The following table gives numbers of files according to various criteria for each folder in the batch.'),
                  tableOutput("summary_per_dir"),
                  tags$br(),
                  textOutput('audit_rename_fail'),
@@ -116,64 +139,64 @@ ui <- fluidPage(
            )
     ),
     
-    tabPanel("Rename Batlogger files", fluid = TRUE,
-             sidebarPanel(
-               h4("Purpose"),
-               tags$p("Batlogger wav files are numbered sequentially so when using one or more detectors 
-              it is possible to have multiple files of the same name. Not having uniquely named 
-              wav files can be problematic when it comes to auditing the results/recordings. This 
-              utility renames Batlogger files, preferentially using GUANO metadata if available 
-              (to include latitude, longitude, date and time in the name); if not filenames are pre-pended 
-              with a concatenated version of the name of the folder hierarchy of where the wav 
-              files are located.  In addition to renaming recordings, a log (csv file) is exported 
-              containing any GUANO information that the files contain. We recommend that users 
-              with Batloggers do this before uploading recordings to the Pipeline. This utility 
-              may be useful for renaming wav files from other makes and models of bat detector, 
-              or to export GUANO metadata from wav files."),
-               tags$p("Please note, this utility will rename your original audio files. Monitor the warning messages carefully to ensure it is doing what you want.", style = "color: red"),
-               tags$br(),
-               tags$br(),
-               
-               h4("Step 1: Select audio folder"),
-               tags$p("Select the folder containing the audio files you want to rename."),
-               tags$p("Hint: Only use left side of popup to navigate to folder", style = "color: red;"),
-               shinyDirButton(id = 'dir_batlogger', 
-                              label = 'Select folder', 
-                              title = 'Select folder containing Batlogger audio files',
-                              class = "btn-primary"),
-               verbatimTextOutput("path_batlogger", placeholder = TRUE),
-               actionButton("scan_for_audio", "Scan for audio files", class = "btn-success"),
-               tags$br(),
-               hr(style="border-color: grey;"),
-               tags$br(),
-               h4("Step 2: Analyse files"),
-               tags$p("Analyse the Batlogger files for GUANO metadata, suggest new file names and check for duplication issues."),
-               actionButton("analyse_audio", "Analyse audio files", class = "btn-success"),
-               tags$br(),
-               hr(style="border-color: grey;"),
-               tags$br(),
-               h4("Step 3: Rename files"),
-               tags$p("Warning: Clicking the following button will change audio filenames in the selected folders. Proceed with caution", style = "color: DarkOrange;"),
-               actionButton("rename_audio", "Rename audio files", class = "btn-success"),
-               tags$br(),
-               tags$br(),
-               tags$br(),
-               actionButton("exit3", "Close App", class = "btn-danger", onclick = "setTimeout(function(){window.close();},500);"),
-             ),
-             mainPanel(
-               tags$div(id = 'batloggertab',
-                        h4('Batlogger file diagnostics'),       
-                        textOutput("batlogger_n_files"),
-                        tags$br(),
-                        textOutput("batlogger_n_with_guano"),
-                        tags$br(),
-                        textOutput("batlogger_n_dupe_names"),
-                        tags$br(),
-                        tags$h4('List of detected audio files with proposed new name'),
-               ),
-               tableOutput('batlogger_table')
-             ),
-    ),
+    # tabPanel("Rename Batlogger files", fluid = TRUE,
+    #          sidebarPanel(
+    #            h4("Purpose"),
+    #            tags$p("Batlogger wav files are numbered sequentially so when using one or more detectors 
+    #           it is possible to have multiple files of the same name. Not having uniquely named 
+    #           wav files can be problematic when it comes to auditing the results/recordings. This 
+    #           utility renames Batlogger files, preferentially using GUANO metadata if available 
+    #           (to include latitude, longitude, date and time in the name); if not filenames are pre-pended 
+    #           with a concatenated version of the name of the folder hierarchy of where the wav 
+    #           files are located.  In addition to renaming recordings, a log (csv file) is exported 
+    #           containing any GUANO information that the files contain. We recommend that users 
+    #           with Batloggers do this before uploading recordings to the Pipeline. This utility 
+    #           may be useful for renaming wav files from other makes and models of bat detector, 
+    #           or to export GUANO metadata from wav files."),
+    #            tags$p("Please note, this utility will rename your original audio files. Monitor the warning messages carefully to ensure it is doing what you want.", style = "color: red"),
+    #            tags$br(),
+    #            tags$br(),
+    #            
+    #            h4("Step 1: Select audio folder"),
+    #            tags$p("Select the folder containing the audio files you want to rename."),
+    #            tags$p("Hint: Only use left side of popup to navigate to folder", style = "color: red;"),
+    #            shinyDirButton(id = 'dir_batlogger', 
+    #                           label = 'Select folder', 
+    #                           title = 'Select folder containing Batlogger audio files',
+    #                           class = "btn-primary"),
+    #            verbatimTextOutput("path_batlogger", placeholder = TRUE),
+    #            actionButton("scan_for_audio", "Scan for audio files", class = "btn-success"),
+    #            tags$br(),
+    #            hr(style="border-color: grey;"),
+    #            tags$br(),
+    #            h4("Step 2: Analyse files"),
+    #            tags$p("Analyse the Batlogger files for GUANO metadata, suggest new file names and check for duplication issues."),
+    #            actionButton("analyse_audio", "Analyse audio files", class = "btn-success"),
+    #            tags$br(),
+    #            hr(style="border-color: grey;"),
+    #            tags$br(),
+    #            h4("Step 3: Rename files"),
+    #            tags$p("Warning: Clicking the following button will change audio filenames in the selected folders. Proceed with caution", style = "color: DarkOrange;"),
+    #            actionButton("rename_audio", "Rename audio files", class = "btn-success"),
+    #            tags$br(),
+    #            tags$br(),
+    #            tags$br(),
+    #            actionButton("exit3", "Close App", class = "btn-danger", onclick = "setTimeout(function(){window.close();},500);"),
+    #          ),
+    #          mainPanel(
+    #            tags$div(id = 'batloggertab',
+    #                     h4('Batlogger file diagnostics'),       
+    #                     textOutput("batlogger_n_files"),
+    #                     tags$br(),
+    #                     textOutput("batlogger_n_with_guano"),
+    #                     tags$br(),
+    #                     textOutput("batlogger_n_dupe_names"),
+    #                     tags$br(),
+    #                     tags$h4('List of detected audio files with proposed new name'),
+    #            ),
+    #            tableOutput('batlogger_table')
+    #          ),
+    # ),
     
     tabPanel('Organise wavs for auditing', fluid=TRUE,
              
