@@ -17,6 +17,17 @@ server <- function(input, output, session) {
   #set up various global defaults  
   global <- reactiveValues(
     wavs_to_audit = NULL,
+    n_need_renaming = NULL,
+    n_cannot_rename = NULL,
+    n_files_in_batch = NULL,
+    n_original_names_duplicated = NULL,
+    n_new_names_duplicated = NULL,
+    summary_per_dir = NULL,
+    file_data = NULL,
+    
+    
+    
+    
     batlogger_files = NULL,
     path_audioaudit = NULL,
     path_batlogger = NULL,
@@ -103,22 +114,37 @@ server <- function(input, output, session) {
     temp <- audit_audio(path_to_process = global$path_audioaudit, files_old = global$wavs_to_audit)
     #temp <- audit_audio(path_to_process = 'C:/batlogger', files_old)
     #unpack
-    global$n_files_in_batch <- temp$num_files
+    global$n_need_renaming <- temp$n_need_renaming
+    global$n_cannot_rename <- temp$n_cannot_rename
+    global$n_files_in_batch <- temp$n_files
+    global$n_dirs_in_batch <- temp$n_dirs
     global$n_original_names_duplicated <- temp$n_duplicated_oldnames
     global$n_new_names_duplicated <- temp$n_duplicated_newnames
     global$summary_per_dir <- temp$summary_per_dir
-    print(global$summary_per_dir)
     global$file_data <- temp$file_data
+    
+    #toggle on visibility of batch summary block
+    show(id = 'batch_summary')
+
+    #write log of files that need renaming but can't be done
+    if(global$n_need_renaming > 0 & global$n_cannot_rename >0) {
+      cannot <- subset(global$file_data, filename_fail == 1 & unrenamable == 1)
+      write.csv(cannot, file = file.path(global$path_audioaudit, 'log_cannot_rename_log.txt'), row.names = FALSE)
+      # shinyalert(title = "Error",
+      #            text = "At least one of the files in this batch needs renaming but cannot be automatically renamed owing to missing GUANO and/or XML metadata. See log_cannot_rename.txt for details and correct manually before trying again.",
+      #            type = "error")
+    }
 
     #format table for plotting and toggle on visibility of the div
     #global$batlogger_table <- temp$batlogger_log[,c('name_original', 'name_proposed', 'warning')]
     #names(global$batlogger_table) <- c('Original file name', 'Proposed file name', 'Warning')
-    show(id = 'batch_summary')
-
     #if there are no duplicates, enable the rename button
     #if(global$batlogger_n_dupe_names == 0) enable(id = 'rename_audio')
+    
+    
   })
   
+
   # #event handler for analysing batlogger files
   # observeEvent(input$analyse_audio, {
   #   temp <- analyse_batlogger_files(path_to_process = global$path_batlogger, files_old = global$batlogger_files)
@@ -302,9 +328,8 @@ server <- function(input, output, session) {
   
   #outputs
   output$audit_file_count <- renderText( { paste("Number of audio files in batch =", global$n_files_in_batch)})
-  output$audit_dupe_oldnames <- renderText( { paste("Number of duplicates in original file names =", global$n_original_names_duplicated)})
-  output$audit_dupe_newnames <- renderText( { paste("Number of duplicates in possible new file names =", global$n_new_names_duplicated)})
-  
+  output$audit_dir_count <- renderText( { paste("Number of folders in batch =", global$n_dirs_in_batch)})
+
   
   
   
@@ -343,6 +368,27 @@ server <- function(input, output, session) {
   #output$batlogger_table = renderTable(global$batlogger_table)
   
   output$summary_per_dir = renderTable(global$summary_per_dir)
+  
+  output$audit_filename_status = renderText({
+    if(global$n_need_renaming==0 & global$n_original_names_duplicated) paste("Success: all of the files in this batch have filenames that match the required format of the Pipeline, and there are no duplicated filenames in this batch. You are good to go!")
+    if(global$n_need_renaming>0) paste("Warning:", global$n_need_renaming, "of the files in this batch have filenames that do not match the required format of the Pipeline. You will need to rename the files before proceeding.")
+  })
+  
+  output$audit_rename_fail = renderText({
+    if(global$n_need_renaming > 0 & global$n_cannot_rename >0) paste("Error:",global$n_cannot_rename, "of the files in this batch needs renaming but cannot be automatically renamed owing to missing GUANO and/or XML metadata. See log_cannot_rename.txt for details and correct manually before trying again.")
+    else('')
+  })
+
+  
+  
+  
+  output$dupe_old_names_text = renderText(
+    if(global$n_need_renaming>0 & global$n_cannot_rename == 0) paste("All of these files can be automatically renamed using embedded metadata.")
+  ) 
+
+  output$dupe_new_names_text = renderText(
+    if(global$n_original_names_duplicated>0) paste(global$n_original_names_duplicated, "of the files in this batch contain duplicate names which will cause problems during downstream processing. We recommend you rename the files to avoid confusion.")
+  ) 
   
 
 }
