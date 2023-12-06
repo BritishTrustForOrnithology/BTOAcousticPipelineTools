@@ -97,11 +97,14 @@ ui <- fluidPage(
                tags$div(id = 'batch_summary',
                  tags$h4("Summary stats for the audio files in the selected folder(s)"),
                  textOutput("audit_file_count"),
-                 textOutput("audit_dupe_oldnames"),
-                 textOutput("audit_dupe_newnames"),
+                 textOutput("audit_dir_count"),
                  tags$br(),
                  tags$h4("Diagnostics by folder"),
-                 tableOutput("summary_per_dir")
+                 tableOutput("summary_per_dir"),
+                 tags$br(),
+                 textOutput('audit_filename_status'),
+                 tags$br(),
+                 textOutput('audit_rename_fail')
                 )
              )
     ),
