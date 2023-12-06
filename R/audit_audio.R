@@ -15,10 +15,23 @@ audit_audio <- function(path_to_process, files_old) {
     this_dirname <- dirname(this_wav)
     this_file <- basename(this_wav)
     
-    #check filename compatibility
+    #check filename compatibility using various filename templates
+    pattern_underscore <- "\\d{8}_\\d{6}"
+    pattern_hyphen <- "\\d{8}-\\d{6}"
+    pattern_peersonic <- "\\d{4}_\\d{2}_\\d{2}__\\d{2}_\\d{2}_\\d{2}"
+    pattern_petersson <- "\\d{4}-\\d{2}-\\d{2}_\\d{2}_\\d{2}_\\d{2}"
+    patterns <- paste(c(pattern_underscore, pattern_hyphen, pattern_peersonic, pattern_petersson), collapse = '|')
+    # audiomoth <- '20120812_091406.wav'
+    # wildlifeacoustics <- 'SM4A123_20120812_091406.wav'
+    # petersson <- 'ABC2010-08-26_10_39_50_M00667DEF.wav'
+    # peersonic <- 'Wav0123_2008_07_04__22_58_14.wav'
+    # grepl(pattern_underscore, audiomoth)
+    # grepl(pattern_underscore, wildlifeacoustics)
+    # grepl(pattern_peersonic, peersonic)
+    # grepl(pattern_petersson, petersson)
+     
     filename_fail <- 1
-    #YYYYMMDD_HHMMSS.wav format or #YYYYMMDD-HHMMSS.wav format
-    if(grepl("\\d{8}_\\d{6}", this_file) | grepl("\\d{8}-\\d{6}", this_file)) {
+    if(grepl(patterns, this_file)) {
       filename_fail <- 0
     }
     
@@ -79,6 +92,12 @@ audit_audio <- function(path_to_process, files_old) {
     dt_mismatch <- 0
     dt_mismatch <- ifelse(!is.na(dt_guano) & !is.na(dt_xml) & dt_guano != dt_xml, 1, dt_mismatch)
 
+    #can the file be processed?
+    #ie does it have a safe filename and/or guano?
+    success <- ifelse(filename_fail == 0 | !is.na(dt_guano), 1, 0)
+    
+    
+    
     #can it be renamed - does it have dt from guano or xml?
     renamable <- 0
     renamable <- ifelse(!is.na(dt_guano) | !is.na(dt_xml), 1, 0)
