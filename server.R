@@ -117,7 +117,7 @@ server <- function(input, output, session) {
   #event handler for analysing batlogger files
   observeEvent(input$analyse_audio, {
     #analyse the files for name conformity, guano, xml and create newnames if required
-    temp <- audit_audio(path_to_process = global$path_audioaudit, files_old = global$wavs_to_audit)
+    temp <- audit_audio(path_to_process = global$path_audioaudit, files = global$wavs_to_audit)
     #unpack
     global$n_files_in_batch <- temp$n_files
     global$n_dirs_in_batch <- temp$n_dirs
