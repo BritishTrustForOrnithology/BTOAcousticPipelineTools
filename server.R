@@ -1,3 +1,4 @@
+#require(tuneR)
 require(shiny)
 require(shinyFiles)
 require(shinyalert)
@@ -16,7 +17,16 @@ server <- function(input, output, session) {
   
   #set up various global defaults  
   global <- reactiveValues(
+    
+    #global vars for the preprocessing audit step
+    path_audioaudit = NULL,
     wavs_to_audit = NULL,
+    n_files_corrupt = NULL,
+    all_ok = NULL,
+    all_filename_fail = NULL,
+    n_dirs_in_batch = NULL,
+    n_files_in_batch = NULL,
+    allow_rename = NULL,
     n_need_renaming = NULL,
     n_cannot_rename = NULL,
     n_files_in_batch = NULL,
@@ -25,12 +35,10 @@ server <- function(input, output, session) {
     summary_per_dir = NULL,
     file_data = NULL,
     
+    #batlogger_files = NULL,
+    #path_batlogger = NULL,
     
-    
-    
-    batlogger_files = NULL,
-    path_audioaudit = NULL,
-    path_batlogger = NULL,
+    #global vars for the organising postprocessing step
     wavs_to_copy = NULL,
     path_audio = passed_path_audio,
     path_output = passed_path_output,
@@ -50,10 +58,11 @@ server <- function(input, output, session) {
   show(id = 'audit1')
   hide(id = 'scan_for_audio')
   hide(id = 'audit2')
+  hide(id = 'audit3')
   hide(id = 'batch_summary')
   hide(id = 'newnames')
   
-  hide(id = 'batloggertab')
+  #hide(id = 'batloggertab')
   hide(id = 'diagnostics')
   hide(id = 'summary')
   hide(id = 'step2')
@@ -103,22 +112,18 @@ server <- function(input, output, session) {
       show(id = 'audit2')
     }
   })
-  
-  # #event handler for listing the batlogger files
-  # observeEvent(input$scan_for_audio, {
-  #   global$batlogger_files <- list_batlogger_files(path_to_process = global$path_batlogger)
-  #   enable(id = 'analyse_audio')
-  # })
+
   
   #event handler for analysing batlogger files
   observeEvent(input$analyse_audio, {
     #analyse the files for name conformity, guano, xml and create newnames if required
     temp <- audit_audio(path_to_process = global$path_audioaudit, files_old = global$wavs_to_audit)
-    print(temp)
     #unpack
     global$n_files_in_batch <- temp$n_files
     global$n_dirs_in_batch <- temp$n_dirs
+    global$n_files_corrupt <- temp$n_files_corrupt
     global$all_ok <- temp$all_ok
+    global$all_filename_fail <- temp$all_filename_fail
     global$allow_rename <- temp$allow_rename
     global$n_need_renaming <- temp$n_need_renaming
     global$n_cannot_rename <- temp$n_cannot_rename
@@ -130,55 +135,56 @@ server <- function(input, output, session) {
     #toggle on visibility of batch summary block
     show(id = 'batch_summary')
 
+    #write log of corrupt files
+    if(global$n_files_corrupt > 0) {
+      corrupt <- subset(global$file_data, file_corrupt == 1)
+      write.csv(corrupt, file = file.path(global$path_audioaudit, 'log_corrupt_files.txt'), row.names = FALSE)
+    }
+
     #write log of files that need renaming but can't be done
     if(global$n_need_renaming > 0 & global$n_cannot_rename >0) {
       cannot <- subset(global$file_data, filename_fail == 1 & unrenamable == 1)
-      write.csv(cannot, file = file.path(global$path_audioaudit, 'log_cannot_rename_log.txt'), row.names = FALSE)
-      # shinyalert(title = "Error",
-      #            text = "At least one of the files in this batch needs renaming but cannot be automatically renamed owing to missing GUANO and/or XML metadata. See log_cannot_rename.txt for details and correct manually before trying again.",
-      #            type = "error")
+      write.csv(cannot, file = file.path(global$path_audioaudit, 'log_cannot_rename.txt'), row.names = FALSE)
     }
 
     if(global$allow_rename == TRUE) {
       show(id = 'newnames')
+      show(id = 'audit3')
+      enable(id = 'rename_audio')
     }
     if(global$allow_rename == FALSE) {
       hide(id = 'newnames')
+      hide(id = 'audit3')
+      disable(id = 'rename_audio')
     }
-    #format table for plotting and toggle on visibility of the div
-    #global$batlogger_table <- temp$batlogger_log[,c('name_original', 'name_proposed', 'warning')]
-    #names(global$batlogger_table) <- c('Original file name', 'Proposed file name', 'Warning')
-    #if there are no duplicates, enable the rename button
-    #if(global$batlogger_n_dupe_names == 0) enable(id = 'rename_audio')
+
     
   })
   
 
-  # #event handler for analysing batlogger files
-  # observeEvent(input$analyse_audio, {
-  #   temp <- analyse_batlogger_files(path_to_process = global$path_batlogger, files_old = global$batlogger_files)
-  #   #unpack
-  #   global$batlogger_n_files <- temp$n_files
-  #   global$batlogger_n_dupe_names <- temp$n_dupes
-  #   global$batlogger_n_with_guano <- temp$n_with_guano
-  #   global$batlogger_log <- temp$batlogger_log
-  #   
-  #   #format table for plotting and toggle on visibility of the div
-  #   global$batlogger_table <- temp$batlogger_log[,c('name_original', 'name_proposed', 'warning')]
-  #   names(global$batlogger_table) <- c('Original file name', 'Proposed file name', 'Warning')
-  #   show(id = 'batloggertab')
-  #   
-  #   #if there are no duplicates, enable the rename button
-  #   if(global$batlogger_n_dupe_names == 0) enable(id = 'rename_audio')
-  # })
-  
-  
-  
-  #event handler for renaming the batlogger files
+  #event handler for renaming the audio files
   observeEvent(input$rename_audio, {
-    rename_batlogger_files(path_to_process = global$path_batlogger, batlogger_log = global$batlogger_log)
+    rename_audio_files(path_to_process = global$path_audioaudit, file_info = global$file_data)
     #once done, disable button to prevent repress
     disable(id = 'rename_audio')
+    hide(id = 'batch_summary')
+    hide(id = 'newnames')
+    hide(id = 'audit2')
+    hide(id = 'audit3')
+    #and clear audit data
+    global$path_audioaudit <- NULL
+    global$n_files_in_batch <- NULL
+    global$n_dirs_in_batch <- NULL
+    global$n_files_corrupt <- NULL
+    global$all_ok <- NULL
+    global$all_filename_fail <- NULL
+    global$allow_rename <- NULL
+    global$n_need_renaming <- NULL
+    global$n_cannot_rename <- NULL
+    global$n_original_names_duplicated <- NULL
+    global$n_new_names_duplicated <- NULL
+    global$summary_per_dir <- NULL
+    global$file_data <- NULL
   })
   
   #event handler for getting the files
@@ -374,14 +380,19 @@ server <- function(input, output, session) {
       Shiny.bindAll(table.table().node());")
   )
   
-  #output$batlogger_table = renderTable(global$batlogger_table)
-  
-  output$summary_per_dir = renderTable(global$summary_per_dir)
-  
+
+  output$summary_per_dir = renderTable({
+    dat <- global$summary_per_dir
+    names(dat) <- c('Directory', 'Total', 'Corrupt', 'Bad filename', 'Usable', 'Has GUANO', 'Has XML', 'Renamable', 'Cannot rename') 
+    dat
+    }, digits=0
+    )
+
   output$audit_filename_status = renderText({
     out <- ''
     #all files OK, no dupes
-    if(global$all_ok == TRUE) out <- paste("Success: all of the files in this batch have filenames that match the required format of the Pipeline, or have associated metatdata that the Pipeline can use. You are good to go!")
+    if(global$all_ok == TRUE & global$all_filename_fail == 0) out <- paste("All of the files in this batch have filenames that match the required format of the Pipeline so do not need to be renamed.")
+    if(global$all_ok == TRUE & global$all_filename_fail == 1) out <- paste("The files in this batch do not have filenames that match the required format of the Pipeline but there are GUANO and/or XML metadata that can be used to rename the files.")
     #files OK but dupes
     if(global$n_need_renaming==0 & global$n_original_names_duplicated > 0) out <- paste("Warning: all of the files in this batch have filenames that match the required format of the Pipeline, or have associated metadata. Note however there are duplicated filenames in this batch. This can cause problems downstream and you may wish to rename accordinly, or process in separate batches to avoid confusion.")
     #files need renaming
@@ -389,14 +400,17 @@ server <- function(input, output, session) {
     out
   })
   
+  
+  output$audit_corrupt_files = renderText({
+    if(global$n_files_corrupt > 0) paste("Error:",global$n_files_corrupt, "files in this batch appear to be corrupt and cannot be read. See log_corrupt_files.txt for details.")
+    else('')
+  })
+
   output$audit_rename_fail = renderText({
     if(global$n_need_renaming > 0 & global$n_cannot_rename >0) paste("Error:",global$n_cannot_rename, "of the files in this batch needs renaming but cannot be automatically renamed owing to missing GUANO and/or XML metadata. See log_cannot_rename.txt for details and correct manually before trying again.")
     else('')
   })
 
-  
-  
-  
   output$dupe_old_names_text = renderText(
     if(global$n_need_renaming>0 & global$n_cannot_rename == 0) paste("All of these files can be automatically renamed using embedded metadata.")
   ) 
