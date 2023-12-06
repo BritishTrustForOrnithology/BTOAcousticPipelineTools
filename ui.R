@@ -99,14 +99,21 @@ ui <- fluidPage(
                  textOutput("audit_file_count"),
                  textOutput("audit_dir_count"),
                  tags$br(),
+                 textOutput('audit_filename_status'),
+                 tags$br(),
                  tags$h4("Diagnostics by folder"),
                  tableOutput("summary_per_dir"),
                  tags$br(),
-                 textOutput('audit_filename_status'),
+                 textOutput('audit_rename_fail'),
                  tags$br(),
-                 textOutput('audit_rename_fail')
-                )
-             )
+               ),
+               tags$div(
+                 id = 'newnames',
+                 tags$h4('Suggested new file names'),
+                 tags$p('The table below shows a selection of the files, their original name and the proposed replacement names based on the date and time extracted from embedded GUANO and/or XML files. To accept these filenames and rename your original files use the rename button on the left.'),
+                 tableOutput('proposed_names')
+               )
+           )
     ),
     
     tabPanel("Rename Batlogger files", fluid = TRUE,
