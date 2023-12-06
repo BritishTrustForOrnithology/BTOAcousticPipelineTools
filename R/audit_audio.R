@@ -110,15 +110,26 @@ audit_audio <- function(path_to_process, files_old) {
   summary_per_dir <- aggregate(data = file_data, cbind(filename_fail, has_guano, has_xml, renamable, unrenamable) ~ dir, sum)
   
   #headline stats
-  num_files <- length(files_old)
-  
+  n_files <- length(files_old)
+
+  n_dirs <- nrow(summary_per_dir)
+    
   #how many of the original filenames will be duplicates?
   n_duplicated_oldnames <- sum(duplicated(basename(files_old)))
   
   #how many of the new filenames will be duplicates?
   n_duplicated_newnames <- sum(duplicated(file_data$newname))
   
-  output <- list(num_files = num_files, 
+  #how many need renaming?
+  n_need_renaming <- sum(file_data$filename_fail)
+  
+  #how many can't be renamed?
+  n_cannot_rename <- sum(file_data$unrenamable)
+  
+  output <- list(n_files = n_files,
+                 n_dirs = n_dirs,
+                 n_need_renaming = n_need_renaming,
+                 n_cannot_rename = n_cannot_rename,
                  n_duplicated_oldnames = n_duplicated_oldnames,
                  n_duplicated_newnames = n_duplicated_newnames,
                  summary_per_dir = summary_per_dir,
