@@ -51,6 +51,7 @@ server <- function(input, output, session) {
   hide(id = 'scan_for_audio')
   hide(id = 'audit2')
   hide(id = 'batch_summary')
+  hide(id = 'newnames')
   
   hide(id = 'batloggertab')
   hide(id = 'diagnostics')
@@ -111,13 +112,16 @@ server <- function(input, output, session) {
   
   #event handler for analysing batlogger files
   observeEvent(input$analyse_audio, {
+    #analyse the files for name conformity, guano, xml and create newnames if required
     temp <- audit_audio(path_to_process = global$path_audioaudit, files_old = global$wavs_to_audit)
-    #temp <- audit_audio(path_to_process = 'C:/batlogger', files_old)
+    print(temp)
     #unpack
-    global$n_need_renaming <- temp$n_need_renaming
-    global$n_cannot_rename <- temp$n_cannot_rename
     global$n_files_in_batch <- temp$n_files
     global$n_dirs_in_batch <- temp$n_dirs
+    global$all_ok <- temp$all_ok
+    global$allow_rename <- temp$allow_rename
+    global$n_need_renaming <- temp$n_need_renaming
+    global$n_cannot_rename <- temp$n_cannot_rename
     global$n_original_names_duplicated <- temp$n_duplicated_oldnames
     global$n_new_names_duplicated <- temp$n_duplicated_newnames
     global$summary_per_dir <- temp$summary_per_dir
@@ -135,12 +139,17 @@ server <- function(input, output, session) {
       #            type = "error")
     }
 
+    if(global$allow_rename == TRUE) {
+      show(id = 'newnames')
+    }
+    if(global$allow_rename == FALSE) {
+      hide(id = 'newnames')
+    }
     #format table for plotting and toggle on visibility of the div
     #global$batlogger_table <- temp$batlogger_log[,c('name_original', 'name_proposed', 'warning')]
     #names(global$batlogger_table) <- c('Original file name', 'Proposed file name', 'Warning')
     #if there are no duplicates, enable the rename button
     #if(global$batlogger_n_dupe_names == 0) enable(id = 'rename_audio')
-    
     
   })
   
@@ -370,8 +379,14 @@ server <- function(input, output, session) {
   output$summary_per_dir = renderTable(global$summary_per_dir)
   
   output$audit_filename_status = renderText({
-    if(global$n_need_renaming==0 & global$n_original_names_duplicated) paste("Success: all of the files in this batch have filenames that match the required format of the Pipeline, and there are no duplicated filenames in this batch. You are good to go!")
-    if(global$n_need_renaming>0) paste("Warning:", global$n_need_renaming, "of the files in this batch have filenames that do not match the required format of the Pipeline. You will need to rename the files before proceeding.")
+    out <- ''
+    #all files OK, no dupes
+    if(global$all_ok == TRUE) out <- paste("Success: all of the files in this batch have filenames that match the required format of the Pipeline, or have associated metatdata that the Pipeline can use. You are good to go!")
+    #files OK but dupes
+    if(global$n_need_renaming==0 & global$n_original_names_duplicated > 0) out <- paste("Warning: all of the files in this batch have filenames that match the required format of the Pipeline, or have associated metadata. Note however there are duplicated filenames in this batch. This can cause problems downstream and you may wish to rename accordinly, or process in separate batches to avoid confusion.")
+    #files need renaming
+    if(global$n_need_renaming>0) out <- paste("Warning:", global$n_need_renaming, "of the files in this batch have filenames that do not match the required format of the Pipeline and do not have associated GUANO metadata. This means these files cannot be processed without being renamed in one of the required formats.")
+    out
   })
   
   output$audit_rename_fail = renderText({
@@ -390,5 +405,12 @@ server <- function(input, output, session) {
     if(global$n_original_names_duplicated>0) paste(global$n_original_names_duplicated, "of the files in this batch contain duplicate names which will cause problems during downstream processing. We recommend you rename the files to avoid confusion.")
   ) 
   
-
+  output$proposed_names = renderTable({
+    if(global$allow_rename == TRUE) {
+      keeprows <- min(10, nrow(global$file_data))
+      global$file_data[1:keeprows, c('original_name', 'new_name')]
+    }
+  }
+  )
+  
 }
