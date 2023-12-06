@@ -1,17 +1,22 @@
 #' Audit audio folders
 #' 
-#' @description Scan the files in the required folder. Check for problem file names and see if these can be rectified
-#' with either GUANO or XML content. If so provide a recommended new name.
+#' @description Scan and audit the files in the required folder. Check for corrupt files, 
+#' bad filenames, duplicates, etc. See if these can be rectified with either GUANO or XML
+#' content. If so provide a recommended new name.
 #' 
-#' @param path = path to audio folder
+#' @param path_to_process = path to audio folder
+#' @param files = list of wav files to audit
 #'
-audit_audio <- function(path_to_process, files_old) {
+#' @return A list containing various diagnostic summary stats, plus a dataframe 
+#' with diagnostics for every file in the batch.
+#' 
+audit_audio <- function(path_to_process, files) {
   #container for results of iteration over files
   outs <- list()
   
   #for each file check...
-  for(f in 1:length(files_old)) {
-    this_wav <- files_old[f]
+  for(f in 1:length(files)) {
+    this_wav <- files[f]
     this_dirname <- dirname(this_wav)
     this_file <- basename(this_wav)
     
@@ -39,7 +44,6 @@ audit_audio <- function(path_to_process, files_old) {
     # grepl(pattern_underscore, wildlifeacoustics)
     # grepl(pattern_peersonic, peersonic)
     # grepl(pattern_petersson, petersson)
-     
     filename_fail <- 1
     if(grepl(patterns, this_file)) {
       filename_fail <- 0
@@ -48,7 +52,6 @@ audit_audio <- function(path_to_process, files_old) {
     #check for guano (if the file is not corrupt)
     if(file_corrupt==0) this_guano <- read_guano(this_wav)
     if(file_corrupt==1) this_guano <- list()
-    
     has_guano <- FALSE
     dt_guano <- NA
     lat_guano <- NA
@@ -110,8 +113,6 @@ audit_audio <- function(path_to_process, files_old) {
     #ie does it have a safe filename and/or a guano date?
     success <- ifelse(filename_fail == 0 | !is.na(dt_guano), 1, 0)
     
-    
-    
     #can it be renamed - does it have dt from guano or xml?
     renamable <- 0
     renamable <- ifelse(!is.na(dt_guano) | !is.na(dt_xml), 1, 0)
@@ -157,7 +158,7 @@ audit_audio <- function(path_to_process, files_old) {
   summary_per_dir <- aggregate(data = file_data, cbind(nfiles, file_corrupt, filename_fail, success, has_guano, has_xml, renamable, unrenamable) ~ directory, sum)
   
   #headline stats
-  n_files <- length(files_old)
+  n_files <- length(files)
   n_dirs <- nrow(summary_per_dir)
   n_files_corrupt <- sum(summary_per_dir$file_corrupt)
   
@@ -168,7 +169,7 @@ audit_audio <- function(path_to_process, files_old) {
   all_ok <- ifelse(n_ok_to_process == n_files, TRUE, FALSE)
     
   #how many of the original filenames are duplicates?
-  n_duplicated_oldnames <- sum(duplicated(basename(files_old)))
+  n_duplicated_oldnames <- sum(duplicated(basename(files)))
   
   #how many of the new filenames will be duplicates?
   n_duplicated_newnames <- sum(duplicated(file_data$new_name))
