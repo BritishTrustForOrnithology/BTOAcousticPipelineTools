@@ -60,6 +60,10 @@ server <- function(input, output, session) {
   hide(id = 'audit2')
   hide(id = 'audit3')
   hide(id = 'batch_summary')
+  
+  hide(id = 'audit_success')
+  hide(id = 'audit_warnings')
+  hide(id = 'audit_errors')
   hide(id = 'newnames')
   
   #hide(id = 'batloggertab')
@@ -118,47 +122,91 @@ server <- function(input, output, session) {
   observeEvent(input$analyse_audio, {
     #analyse the files for name conformity, guano, xml and create newnames if required
     temp <- audit_audio(path_to_process = global$path_audioaudit, files = global$wavs_to_audit)
-    #unpack
+    print(temp)
+    #unpack booleans
     global$n_files_in_batch <- temp$n_files
     global$n_dirs_in_batch <- temp$n_dirs
+    global$all_ok_to_process_no_dupes <- temp$all_ok_to_process_no_dupes
+    global$all_ok_to_process_but_dupes <- temp$all_ok_to_process_but_dupes
+    global$some_names_bad_but_fixable <- temp$some_names_bad_but_fixable
+    global$some_names_bad_but_fixable_but_dupes <- temp$some_names_bad_but_fixable_but_dupes
+    global$some_names_bad_not_fixable <- temp$some_names_bad_not_fixable
+    global$some_files_corrupt <- temp$some_files_corrupt
+    
+    #unpack values
+    global$n_files_acceptable <- temp$n_files_acceptable
     global$n_files_corrupt <- temp$n_files_corrupt
-    global$all_ok <- temp$all_ok
-    global$all_filename_fail <- temp$all_filename_fail
-    global$allow_rename <- temp$allow_rename
-    global$n_need_renaming <- temp$n_need_renaming
+    global$n_files_good_names <- temp$n_files_good_names
+    global$n_files_bad_names <- temp$n_files_bad_names
     global$n_cannot_rename <- temp$n_cannot_rename
-    global$n_original_names_duplicated <- temp$n_duplicated_oldnames
-    global$n_new_names_duplicated <- temp$n_duplicated_newnames
+    global$n_duplicated_oldnames <- temp$n_duplicated_oldnames
+    global$n_duplicated_newnames <- temp$n_duplicated_newnames
+    
+    # global$n_files_good_names <- temp$n_files_good_names
+    # global$n_files_bad_names <- temp$n_files_bad_names
+    # 
+    # global$all_ok_to_process <- temp$all_ok_to_process
+    # global$all_filename_fail <- temp$all_filename_fail
+    # global$allow_rename <- temp$allow_rename
+    # global$n_need_renaming <- temp$n_need_renaming
+    #data
     global$summary_per_dir <- temp$summary_per_dir
     global$file_data <- temp$file_data
     
     #toggle on visibility of batch summary block
     show(id = 'batch_summary')
 
+    
     #write log of corrupt files
     if(global$n_files_corrupt > 0) {
+      show(id = 'audit_errors')
       corrupt <- subset(global$file_data, file_corrupt == 1)
-      write.csv(corrupt, file = file.path(global$path_audioaudit, 'log_corrupt_files.txt'), row.names = FALSE)
+      write.csv(corrupt, file = file.path(global$path_audioaudit, 'log_corrupt_files.csv'), row.names = FALSE)
     }
 
     #write log of files that need renaming but can't be done
-    if(global$n_need_renaming > 0 & global$n_cannot_rename >0) {
-      cannot <- subset(global$file_data, filename_fail == 1 & unrenamable == 1)
-      write.csv(cannot, file = file.path(global$path_audioaudit, 'log_cannot_rename.txt'), row.names = FALSE)
+    if(global$n_cannot_rename >0) {
+      show(id = 'audit_errors')
+      cannot <- subset(global$file_data, filename_bad == 1 & unrenamable == 1)
+      write.csv(cannot, file = file.path(global$path_audioaudit, 'log_cannot_rename.csv'), row.names = FALSE)
     }
 
-    if(global$allow_rename == TRUE) {
-      show(id = 'newnames')
-      show(id = 'audit3')
-      enable(id = 'rename_audio')
-    }
-    if(global$allow_rename == FALSE) {
-      hide(id = 'newnames')
-      hide(id = 'audit3')
-      disable(id = 'rename_audio')
+    #write log of files that will have duplicated names
+    if(global$n_duplicated_newnames >0) {
+      show(id = 'audit_errors')
+      newdupe <- subset(global$file_data, newname_duplicated == TRUE)
+      write.csv(newdupe, file = file.path(global$path_audioaudit, 'log_potential_duplicate_new_names.csv'), row.names = FALSE)
     }
 
     
+    #toggle panels  
+    if(global$all_ok_to_process_no_dupes == TRUE) {
+      show(id='audit_success')
+      disable(id = 'rename_audio')
+    }
+    if(global$all_ok_to_process_but_dupes == TRUE) {
+      show(id='audit_warnings')
+      disable(id = 'rename_audio')
+    }
+    if(global$some_names_bad_but_fixable == TRUE) {
+      show(id='audit_warnings')
+      show(id = 'audit3')
+      enable(id = 'rename_audio')
+    }
+    if(global$some_names_bad_but_fixable_but_dupes == TRUE) {
+      show(id='audit_errors')
+      disable(id = 'rename_audio')
+    }
+    if(global$some_names_bad_not_fixable == TRUE) {
+      show(id='audit_errors')
+      disable(id = 'rename_audio')
+    }
+    if(global$some_files_corrupt == TRUE) {
+      show(id='audit_errors')
+      disable(id = 'rename_audio')
+    }
+    
+
   })
   
 
@@ -381,50 +429,60 @@ server <- function(input, output, session) {
   )
   
 
+
+
+  
+  #AUDIT ERRORS ----------------------------------------------------------------
+  #there are corrupt files
+  output$audit_error_corrupt_files = renderText({
+    if(global$some_files_corrupt == TRUE) paste(global$n_files_corrupt, "of", global$n_files_in_batch, "files appear to be corrupt and cannot be read. See log_corrupt_files.txt for details.")
+  })
+  #bad names that can't be fixed
+  output$audit_error_rename_fail = renderText({
+    if(global$some_names_bad_not_fixable == TRUE) paste(global$n_files_bad_names, "of", global$n_files_in_batch, "files need renaming to Pipeline format but of these", global$n_cannot_rename, "files cannot be automatically renamed owing to missing GUANO and/or XML metadata. See log_cannot_rename.csv for details and correct manually before trying again.")
+  })
+  #that duplicate file names will be made
+  output$audit_error_newname_dupe = renderText(
+    if(global$some_names_bad_but_fixable_but_dupes == TRUE) paste(global$n_files_bad_names, "of", global$n_files_in_batch, "files need renaming to Pipeline format but automatic renaming will create", global$n_duplicated_newnames, "files with non-unique names. We recommend you investigate this manually before retrying. See log_potential_duplicate_new_names.csv for details.")
+  ) 
+  
+  
+  #AUDIT WARNINGS --------------------------------------------------------------
+  #old names are duplicates  
+  output$audit_warning_oldname_dupe = renderText(
+    if(global$all_ok_to_process_but_dupes == TRUE) paste('File names are acceptable for Pipeline format but across the selected folders there are', global$n_duplicated_oldnames, "files with apparently duplicated names. This can cause problems during downstream processing. If possible we recommend you rename the files to avoid confusion.")
+  )
+  #bad filenames but can be fixed
+  output$audit_warning_need_rename = renderText(
+    if(global$some_names_bad_but_fixable == TRUE) paste(global$n_files_bad_names, "of", global$n_files_in_batch, "files need renaming to Pipeline format and there are GUANO and/or XML metadata that can be used to automatically rename the files.")
+  )
+
+
+  #AUDIT SUCCESS ---------------------------------------------------------------
+  #all fine
+  output$audit_success = renderText(
+    if(global$all_ok_to_process_no_dupes == TRUE) paste(global$n_files_acceptable, "of", global$n_files_in_batch, "files are acceptable for the Pipeline as they have names in Pipeline format and/or have associated GUANO metadata. Renaming is not essential but can be done if a warning is shown.")
+  ) 
+  
+  
+  
+  
+  
+  #AUDIT TABLES ----------------------------------------------------------------
+  #directory stats
   output$summary_per_dir = renderTable({
     dat <- global$summary_per_dir
-    names(dat) <- c('Directory', 'Total', 'Corrupt', 'Bad filename', 'Usable', 'Has GUANO', 'Has XML', 'Renamable', 'Cannot rename') 
+    names(dat) <- c('Directory', 'Total', 'Corrupt', 'Acceptable', 'Bad filename', 'Has GUANO', 'Has XML', 'Renamable', 'Cannot rename') 
     dat
     }, digits=0
     )
-
-  output$audit_filename_status = renderText({
-    out <- ''
-    #all files OK, no dupes
-    if(global$all_ok == TRUE & global$all_filename_fail == 0) out <- paste("All of the files in this batch have filenames that match the required format of the Pipeline so do not need to be renamed.")
-    if(global$all_ok == TRUE & global$all_filename_fail == 1) out <- paste("The files in this batch do not have filenames that match the required format of the Pipeline but there are GUANO and/or XML metadata that can be used to rename the files.")
-    #files OK but dupes
-    if(global$n_need_renaming==0 & global$n_original_names_duplicated > 0) out <- paste("Warning: all of the files in this batch have filenames that match the required format of the Pipeline, or have associated metadata. Note however there are duplicated filenames in this batch. This can cause problems downstream and you may wish to rename accordinly, or process in separate batches to avoid confusion.")
-    #files need renaming
-    if(global$n_need_renaming>0) out <- paste("Warning:", global$n_need_renaming, "of the files in this batch have filenames that do not match the required format of the Pipeline and do not have associated GUANO metadata. This means these files cannot be processed without being renamed in one of the required formats.")
-    out
-  })
   
-  
-  output$audit_corrupt_files = renderText({
-    if(global$n_files_corrupt > 0) paste("Error:",global$n_files_corrupt, "files in this batch appear to be corrupt and cannot be read. See log_corrupt_files.txt for details.")
-    else('')
-  })
-
-  output$audit_rename_fail = renderText({
-    if(global$n_need_renaming > 0 & global$n_cannot_rename >0) paste("Error:",global$n_cannot_rename, "of the files in this batch needs renaming but cannot be automatically renamed owing to missing GUANO and/or XML metadata. See log_cannot_rename.txt for details and correct manually before trying again.")
-    else('')
-  })
-
-  output$dupe_old_names_text = renderText(
-    if(global$n_need_renaming>0 & global$n_cannot_rename == 0) paste("All of these files can be automatically renamed using embedded metadata.")
-  ) 
-
-  output$dupe_new_names_text = renderText(
-    if(global$n_original_names_duplicated>0) paste(global$n_original_names_duplicated, "of the files in this batch contain duplicate names which will cause problems during downstream processing. We recommend you rename the files to avoid confusion.")
-  ) 
-  
+  #suggested names
   output$proposed_names = renderTable({
     if(global$allow_rename == TRUE) {
       keeprows <- min(10, nrow(global$file_data))
       global$file_data[1:keeprows, c('original_name', 'new_name')]
     }
-  }
-  )
+  })
   
 }
