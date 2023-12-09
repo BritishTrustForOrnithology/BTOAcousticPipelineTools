@@ -22,7 +22,7 @@ list_audio_files <- function(path_to_process) {
                type = "error")
   }
   if(length(files_old) > 0) {
-    shinyalert(title = "Success", 
+    shinyalert(title = "Audio files found", 
                text = paste(length(files_old)," wav files in the chosen folder. Proceed to Step 2"), 
                type = "success")
     return(files_old)    
