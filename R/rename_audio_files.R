@@ -15,16 +15,26 @@ rename_audio_files <- function(path_to_process, file_info) {
   
   #rename
   withProgress(message = "Renaming files...", value = 0, {
-    file.rename(files_old, files_new)
+    rename_result <- file.rename(files_old, files_new)
   })
   
+  done_all <- ifelse(sum(rename_result) == nrow(file_info), TRUE, FALSE)
+  
   #make and save log
-  file_log <- file.path(path_to_process, "pipeline tools renaming metadata log.csv")
+  prefix <- format(Sys.time(), "%Y%m%d_%H%M%S_")
+  file_log <- file.path(path_to_process, paste0(prefix,"pipeline tools renaming metadata log.csv"))
   write.csv(file_info, file = file_log, row.names = FALSE)
 
-  shinyalert(title = "Success",
-             text = paste("wav files renamed. Details in: ", file_log),
-             type = "success")
+  if(done_all == TRUE) {
+    shinyalert(title = "Success",
+               text = paste("All wav files renamed successfully. Details in: ", file_log),
+               type = "success")
+  }
+  if(done_all == FALSE) {
+    shinyalert(title = "Error!",
+               text = paste("Not all filenames were updated properly. Check folder carefully and see", file_log),
+               type = "error")
+  }
   
   
 }
