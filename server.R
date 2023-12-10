@@ -190,9 +190,9 @@ server <- function(input, output, session) {
       corrupt <- subset(global$file_data, file_corrupt == 1)
       write.csv(corrupt, file = file.path(global$path_audioaudit, paste0(prefix,'log_corrupt_files.csv')), row.names = FALSE)
     }
-    #write log of files that need renaming but can't be done
+    #write log of files that can't be renamed
     if(global$n_cannot_rename >0) {
-      cannot <- subset(global$file_data, filename_bad == 1 & unrenamable == 1)
+      cannot <- subset(global$file_data, unrenamable == 1)
       write.csv(cannot, file = file.path(global$path_audioaudit, paste0(prefix,'log_cannot_rename.csv')), row.names = FALSE)
     }
     #write log of files that will have duplicated names
