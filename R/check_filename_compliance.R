@@ -8,20 +8,20 @@
 #' 
 #' @examples
 #' # example code
-check_filename_compliance(filename = '20120812-091406.wav')                     #audiomoth PASS
-check_filename_compliance(filename = "34440445_202306.wav")                     #audiomoth FAIL - bad date
-check_filename_compliance(filename = "20121115_252306.wav")                     #audiomoth FAIL - bad time
-check_filename_compliance(filename = "34440445_202306132456.wav")               #audiomoth FAIL - trailing numbers
-check_filename_compliance(filename = 'SM4A123_20120812_091406.wav')             #wildlifeacoustics PASS
-check_filename_compliance(filename = 'Wav0123_2008_07_04__22_58_14.wav')        #peersonic PASS
-check_filename_compliance(filename = 'Wav0123_2008_07_04_22_58_14.wav')         #peersonic FAIL (bad dt format)
-check_filename_compliance(filename = 'Wav0123_2008_06__31_22_58_14.wav')        #peersonic FAIL (bad date)
-check_filename_compliance(filename = 'Wav0123_2008_07__31_25_58_14.wav')        #peersonic FAIL (bad time)
-check_filename_compliance(filename = 'ABC2010-08-26_10_39_50_M00667DEF.wav')    #petersson PASS
-check_filename_compliance(filename = '1232010-08-26_10_39_50_M00667DEF.wav')    #petersson FAIL (numeric start)
-check_filename_compliance(filename = '1232010-08-26_10_39_50_00667DEF.wav')     #petersson FAIL (numeric end)
-check_filename_compliance(filename = 'ABC2010-06-31_10_39_50_M00667DEF.wav')    #petersson FAIL (bad date)
-check_filename_compliance(filename = 'C:/20120812-091406.wav')                  #audiomoth ERROR (included path)
+# check_filename_compliance(filename = '20120812-091406.wav')                     #audiomoth PASS
+# check_filename_compliance(filename = "34440445_202306.wav")                     #audiomoth FAIL - bad date
+# check_filename_compliance(filename = "20121115_252306.wav")                     #audiomoth FAIL - bad time
+# check_filename_compliance(filename = "34440445_202306132456.wav")               #audiomoth FAIL - trailing numbers
+# check_filename_compliance(filename = 'SM4A123_20120812_091406.wav')             #wildlifeacoustics PASS
+# check_filename_compliance(filename = 'Wav0123_2008_07_04__22_58_14.wav')        #peersonic PASS
+# check_filename_compliance(filename = 'Wav0123_2008_07_04_22_58_14.wav')         #peersonic FAIL (bad dt format)
+# check_filename_compliance(filename = 'Wav0123_2008_06__31_22_58_14.wav')        #peersonic FAIL (bad date)
+# check_filename_compliance(filename = 'Wav0123_2008_07__31_25_58_14.wav')        #peersonic FAIL (bad time)
+# check_filename_compliance(filename = 'ABC2010-08-26_10_39_50_M00667DEF.wav')    #petersson PASS
+# check_filename_compliance(filename = '1232010-08-26_10_39_50_M00667DEF.wav')    #petersson FAIL (numeric start)
+# check_filename_compliance(filename = '1232010-08-26_10_39_50_00667DEF.wav')     #petersson FAIL (numeric end)
+# check_filename_compliance(filename = 'ABC2010-06-31_10_39_50_M00667DEF.wav')    #petersson FAIL (bad date)
+# check_filename_compliance(filename = 'C:/20120812-091406.wav')                  #audiomoth ERROR (included path)
   
 check_filename_compliance <- function(filename) {
   if(basename(filename) != filename) stop(paste('Passed filename should not include path:', filename))
