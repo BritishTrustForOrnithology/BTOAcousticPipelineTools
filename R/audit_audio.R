@@ -182,8 +182,8 @@ audit_audio <- function(path_to_process, files) {
   file_data$nfiles <- 1 #dummy var to count fils
   
   #which files are duplicates
-  file_data$oldname_duplicated <- ifelse( duplicated(file_data$file) | duplicated(file_data$file, fromLast = TRUE), TRUE, FALSE)
-  file_data$newname_duplicated <- ifelse( duplicated(file_data$new_name) | duplicated(file_data$new_name, fromLast = TRUE), TRUE, FALSE)
+  file_data$oldname_duplicated <- ifelse( duplicated(file_data$file, incomparables = c(NA)) | duplicated(file_data$file, fromLast = TRUE, incomparables = c(NA)), TRUE, FALSE)
+  file_data$newname_duplicated <- ifelse( duplicated(file_data$new_name, incomparables = c(NA)) | duplicated(file_data$new_name, fromLast = TRUE, incomparables = c(NA)), TRUE, FALSE)
 
   #get summary stats for each folder
   summary_per_dir <- aggregate(data = file_data, cbind(nfiles, file_corrupt, acceptable, filename_bad, has_guano, has_xml, renamable, unrenamable) ~ directory, sum)
