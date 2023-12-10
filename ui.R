@@ -67,28 +67,36 @@ ui <- fluidPage(
     tabPanel("Preprocessing", fluid = TRUE,
              sidebarPanel(
                h4("Preprocessing check for common problems"),
-               tags$p("This preprocessing step checks whether file names are compatible with the 
-               Acoustic Pipeline and whether embedded GUANO or XML metadata can be used to rename files.
-               This is especially useful for Batlogger wav files which are numbered sequentially. 
-               If using more than one detector it is possible to have multiple files of the same name. 
-               Non-unique wav files can be problematic when it comes to auditing the results/recordings. This 
-              utility wav files to be renamed if GUANO or XML metadata include the date/time of the recording. 
-              In addition to renaming recordings, a log (csv file) is exported 
-              containing any GUANO or XML content that the files contain. We recommend that users 
-              with Batloggers do this before uploading recordings to the Pipeline. This utility 
-              may be useful for renaming wav files from other makes and models of bat detector, 
-              or to export GUANO metadata from wav files."),
-               tags$p("Please note, this utility will rename your original audio files. Monitor the warning messages carefully to ensure it is doing what you want.", style = "color: red"),
+               tags$p("This preprocessing step checks whether file names are compatible with the Acoustic 
+                      Pipeline and whether embedded GUANO or XML metadata can be used to rename files. This 
+                      is especially useful for Elekon Batlogger wav files which are numbered sequentially. 
+                      Non-unique wav files can be problematic when it comes to auditing the 
+                      results/recordings. This utility allows wav files to be renamed if XML (specific 
+                      to Elekon Batloggers) or GUANO metadata include the date/time of the recording. 
+                      In addition to renaming recordings, a log (csv file) is exported containing any 
+                      GUANO or XML content that the files contain. We recommend that users with Batloggers 
+                      do this before uploading recordings to the Pipeline. This utility may be useful 
+                      for renaming wav files from other makes and models of bat detector, or to export 
+                      GUANO metadata from wav files."),
+               tags$p('When renaming the app will attempt to rename files in the format latitude+longitude_date_time.wav,
+                      e.g. 50~9191+-2~757_20230622_220502.wav. If location cannot be gleaned from metadata 
+                      the file will be renamed in the format date_time.wav, e.g. 20230622_220502.wav. Beware 
+                      that the latter can generate duplicate names if you have multiple recorders producing 
+                      files with identical timestamps. It is your responsibility to check the errors and warning
+                      carefully before renaming.'),
+               tags$p("Please note, this utility will rename your original audio files with no option to undo. 
+                      Monitor the warning messages carefully to ensure it is doing what you want.", 
+                      style = "color: red"),
                tags$br(),
 
                tags$div(
                  id = "audit1", 
                  h4("Step 1: Select audio folder"),
-                 tags$p("You can select a folder with subfolders for these checks but note that the Pipeline App (ultrasonic) only allows processing of single folders (no subfolders)."),
+                 tags$p("You can select a folder with subfolders for these checks but note that the Pipeline App (ultrasonic) currently only allows uploading/processing of single folders (no subfolders)."),
                  tags$p("Hint: Only use left side of popup to navigate to folder", style = "color: red;"),
                  shinyDirButton(id = 'dir_audioaudit',
                                 label = 'Select folder',
-                                title = 'Select folder containing Batlogger audio files',
+                                title = 'Select folder containing audio files',
                                 class = "btn-primary"),
                  verbatimTextOutput("path_audioaudit", placeholder = TRUE),
                  actionButton("scan_for_audio", "Scan for audio files", class = "btn-success")
@@ -118,6 +126,7 @@ ui <- fluidPage(
                  tags$h4("Diagnostics by folder"),
                  tags$p('The following table gives numbers of files according to various criteria for each folder in the batch.'),
                  tableOutput("audit_summary_per_dir"),
+                 tags$p("Columns explained: Acceptable = either the filename complies with Pipeline format or embedded GUANO can be used instead"),
                  tags$br(),
                  tags$div(
                    id = 'audit_errors',
