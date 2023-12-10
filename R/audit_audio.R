@@ -11,14 +11,7 @@
 #' with diagnostics for every file in the batch.
 #' 
 audit_audio <- function(path_to_process, files) {
-  #valid filename patterns
-  pattern_underscore <- "\\d{8}_\\d{6}"
-  pattern_hyphen <- "\\d{8}-\\d{6}"
-  pattern_peersonic <- "\\d{4}_\\d{2}_\\d{2}__\\d{2}_\\d{2}_\\d{2}"
-  pattern_petersson <- "\\d{4}-\\d{2}-\\d{2}_\\d{2}_\\d{2}_\\d{2}"
-  patterns <- paste(c(pattern_underscore, pattern_hyphen, pattern_peersonic, pattern_petersson), collapse = '|')
-  
-  
+
   #container for results of iteration over files
   outs <- list()
   
@@ -39,20 +32,9 @@ audit_audio <- function(path_to_process, files) {
         1
       })
       
-      #check filename compatibility using various filename templates
-      # audiomoth <- '20120812_091406.wav'
-      # wildlifeacoustics <- 'SM4A123_20120812_091406.wav'
-      # petersson <- 'ABC2010-08-26_10_39_50_M00667DEF.wav'
-      # peersonic <- 'Wav0123_2008_07_04__22_58_14.wav'
-      # grepl(pattern_underscore, audiomoth)
-      # grepl(pattern_underscore, wildlifeacoustics)
-      # grepl(pattern_peersonic, peersonic)
-      # grepl(pattern_petersson, petersson)
-      filename_bad <- 1
-      if(grepl(patterns, this_file)) {
-        filename_bad <- 0
-      }
-      
+      #check filename compatibility and datetime using various filename templates
+      filename_bad <- ifelse(check_filename_compliance(this_file), 0, 1)
+
       #check for guano (if the file is not corrupt)
       if(file_corrupt==0) this_guano <- read_guano(this_wav)
       if(file_corrupt==1) this_guano <- list()
