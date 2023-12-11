@@ -33,7 +33,7 @@ rename_audio_files <- function(path_to_process, file_info) {
   })
 
   #check all changes were made
-  done_all_wav <- ifelse(wavdone == length(files_old), TRUE, FALSE)
+  done_all <- ifelse(wavdone == length(files_old), TRUE, FALSE)
   
   #make and save log
   prefix <- format(Sys.time(), "%Y%m%d_%H%M%S_")
