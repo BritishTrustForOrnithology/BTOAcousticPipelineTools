@@ -27,6 +27,7 @@ check_filename_compliance <- function(filename) {
   if(basename(filename) != filename) stop(paste('Passed filename should not include path:', filename))
   
   good <- FALSE
+  dt_filename <- NA
   
   #Audiomoth / Wildlife Acoustics format
   #20120812_091406.wav'                     # audiomoth
@@ -35,7 +36,8 @@ check_filename_compliance <- function(filename) {
   if(grepl(pattern_underscore, filename) == TRUE) {
     dtbit <- regmatches(filename, regexpr("\\d{8}_\\d{6}", filename))
     #can this be interpreted as a date time?
-    good <- !is.na(as.POSIXct(dtbit, format = "%Y%m%d_%H%M%S"))
+    dt_filename <- format(as.POSIXct(dtbit, format = "%Y%m%d_%H%M%S"), "%Y%m%d_%H%M%S")
+    good <- !is.na(dt_filename)
   }
 
   #Like WA and Audiomoth but with hyphens
@@ -44,7 +46,8 @@ check_filename_compliance <- function(filename) {
   if(grepl(pattern_hyphen, filename) == TRUE) {
     dtbit <- regmatches(filename, regexpr("\\d{8}-\\d{6}", filename))
     #can this be interpreted as a date time?
-    good <- !is.na(as.POSIXct(dtbit, format = "%Y%m%d-%H%M%S"))
+    dt_filename <- format(as.POSIXct(dtbit, format = "%Y%m%d-%H%M%S"), "%Y%m%d_%H%M%S")
+    good <- !is.na(dt_filename)
   }
   
   #Peersonic format
@@ -53,7 +56,8 @@ check_filename_compliance <- function(filename) {
   if(grepl(pattern_peersonic, filename) == TRUE) {
     dtbit <- regmatches(filename, regexpr("\\d{4}_\\d{2}_\\d{2}__\\d{2}_\\d{2}_\\d{2}", filename))
     #can this be interpreted as a date time?
-    good <- !is.na(as.POSIXct(dtbit, format = "%Y_%m_%d__%H_%M_%S"))
+    dt_filename <- format(as.POSIXct(dtbit, format = "%Y_%m_%d__%H_%M_%S"), "%Y%m%d_%H%M%S")
+    good <- !is.na(dt_filename)
   }
   
   #Petersson format
@@ -62,8 +66,11 @@ check_filename_compliance <- function(filename) {
   if(grepl(pattern_petersson, filename) == TRUE) {
     dtbit <- regmatches(filename, regexpr("\\d{4}-\\d{2}-\\d{2}_\\d{2}_\\d{2}_\\d{2}", filename))
     #can this be interpreted as a date time?
-    good <- !is.na(as.POSIXct(dtbit, format = "%Y-%m-%d_%H_%M_%S"))
+    dt_filename <- format(as.POSIXct(dtbit, format = "%Y-%m-%d_%H_%M_%S"), "%Y%m%d_%H%M%S")
+    good <- !is.na(dt_filename)
   }
   
-  return(good)
+  output <- list(good = good, 
+                 dt_filename = dt_filename)
+  return(output)
 }
