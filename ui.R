@@ -80,10 +80,9 @@ ui <- fluidPage(
                       GUANO metadata from wav files."),
                tags$p('When renaming the app will attempt to rename files in the format latitude+longitude_date_time.wav,
                       e.g. 50~9191+-2~757_20230622_220502.wav. If location cannot be gleaned from metadata 
-                      the file will be renamed in the format date_time.wav, e.g. 20230622_220502.wav. Beware 
-                      that the latter can generate duplicate names if you have multiple recorders producing 
-                      files with identical timestamps. It is your responsibility to check the errors and warning
-                      carefully before renaming.'),
+                      the file will be renamed in the format date_time_old_oldname.wav, e.g. 20230622_220502_old_1234567.wav. 
+                      We append the old filename into the new one to reduce chances of creating duplicate names. It is 
+                      your responsibility to check the errors and warning carefully before renaming.'),
                tags$p("Please note, this utility will rename your original audio files with no option to undo. 
                       Monitor the warning messages carefully to ensure it is doing what you want.", 
                       style = "color: red"),
@@ -126,7 +125,17 @@ ui <- fluidPage(
                  tags$h4("Diagnostics by folder"),
                  tags$p('The following table gives numbers of files according to various criteria for each folder in the batch.'),
                  tableOutput("audit_summary_per_dir"),
-                 tags$p("Columns explained: Acceptable = either the filename complies with Pipeline format or embedded GUANO can be used instead"),
+                 tags$p("Columns explained:", style = "font-size:11px"),
+                 tags$ul(style = "font-size:11px",
+                   tags$li("Total = total number of wav files in the folder."),
+                   tags$li("Corrupt = wav file headers cannot be read; suggests the file is corrupt possibly due to incomplete save."),
+                   tags$li("Acceptable = wav files can be processed by the Pipeline as is because one or more of: i) the filename complies with Pipeline format; ii) metadata can be read from an XML file; iii) wav files contain embedded GUANO metadata."),
+                   tags$li("Bad filename = filenames do not comply with one of the expected formats. See Acoustic Pipeline Support Hub for more details."),
+                   tags$li("Has GUANO = wav files contain embedded GUANO metadata."),
+                   tags$li("Has XML = wav files have paired (same name) XML file."),
+                   tags$li("Renambale = filenames are bad but sufficient metadata can be derived to rename the wav file in a Pipeline-friendly format."),
+                   tags$li("Cannot rename = filenames are bad but insufficient metadata can be derived to rename the files.")
+                 ),
                  tags$br(),
                  tags$div(
                    id = 'audit_errors',
