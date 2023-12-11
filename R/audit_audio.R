@@ -33,7 +33,10 @@ audit_audio <- function(path_to_process, files) {
       })
       
       #check filename compatibility and datetime using various filename templates
-      filename_bad <- ifelse(check_filename_compliance(this_file), 0, 1)
+      #if filename good, extract dt_filename
+      filename_check <- check_filename_compliance(this_file)
+      filename_bad <- ifelse(filename_check$good, 0, 1)
+      dt_filename <- filename_check$dt_filename
 
       #check for guano (if the file is not corrupt)
       if(file_corrupt==0) this_guano <- read_guano(this_wav)
@@ -96,14 +99,18 @@ audit_audio <- function(path_to_process, files) {
       }
       
       #process the date time info
-      #if both present, do GUANO and XML agree?
+      #if multiple sources present, do datetimes agree?
       dt2use <- NA
       dt_mismatch <- 0
       dt_mismatch <- ifelse(!is.na(dt_guano) & !is.na(dt_xml) & dt_guano != dt_xml, 1, dt_mismatch)
+      dt_mismatch <- ifelse(!is.na(dt_guano) & !is.na(dt_filename) & dt_guano != dt_filename, 1, dt_mismatch)
+      dt_mismatch <- ifelse(!is.na(dt_xml) & !is.na(dt_filename) & dt_xml != dt_filename, 1, dt_mismatch)
+      #if dates don't mismatch use datetimes in order filename > guano > xml
+      if(is.na(dt2use) & dt_mismatch == 0 & !is.na(dt_filename)) dt2use <- dt_filename
       #if dates don't mismatch and guano populated, use guano    
-      if(dt_mismatch == 0 & !is.na(dt_guano)) dt2use <- dt_guano
+      if(is.na(dt2use) & dt_mismatch == 0 & !is.na(dt_guano)) dt2use <- dt_guano
       #if dates don't mismatch and XML populated, use XML
-      if(dt_mismatch == 0 & !is.na(dt_xml)) dt2use <- dt_xml
+      if(is.na(dt2use) & dt_mismatch == 0 & !is.na(dt_xml)) dt2use <- dt_xml
   
       #process the lat-long info
       #if both present, do GUANO and XML agree?
@@ -121,19 +128,19 @@ audit_audio <- function(path_to_process, files) {
       if(lon_mismatch == 0 & !is.na(lon_xml)) lon2use <- lon_xml
       
       #can the file be processed without change?
-      #ie does it have a safe filename and/or a guano date?
-      acceptable <- ifelse(filename_bad == 0 | !is.na(dt_guano), 1, 0)
+      #ie does it have a safe filename and/or a guano date and/or xml date?
+      acceptable <- ifelse(filename_bad == 0 | !is.na(dt_guano) | !is.na(dt_xml), 1, 0)
       
-      #can it be renamed - does it have dt from guano or xml?
-      renamable <- ifelse(!is.na(dt2use), 1, 0)
+      #can it be renamed - only if filename bad and has datetime from guano or xml?
+      renamable <- ifelse(filename_bad == 1 & !is.na(dt2use), 1, 0)
   
-      #can the file not be renamed?
-      unrenamable <- 1-renamable
+      #can the file not be renamed - only relevant for files that are badly named?
+      unrenamable <- ifelse(filename_bad == 1 & is.na(dt2use), 1, 0)
       
       #if the file can be renamed based on data, create newname
       newname <- NA
       if(renamable==1) {
-        #if lat lon available, use it
+        #if lat and lon both available, use them
         if(!is.na(lat2use) & !is.na(lon2use)) {
           #convert lat-long to character and replace decimal point with ~ as required for some batviewer apps
           lat <- gsub("\\.", "~", as.character(lat2use))
@@ -141,6 +148,7 @@ audit_audio <- function(path_to_process, files) {
           #compile new filename in Pipeline format
           newname <- file.path(this_dirname, trimws(paste0(lat, "+", lon, "_", dt2use, ".wav")))
         }
+        #if either lat or long unavailable use datetime renaming with old filename suffix
         if(is.na(lat2use) | is.na(lon2use)) {
           newname <- file.path(this_dirname, trimws(paste0(dt2use,"_old_",this_file)))
         }
@@ -152,6 +160,7 @@ audit_audio <- function(path_to_process, files) {
                               file_corrupt = file_corrupt,
                               acceptable = acceptable, 
                               filename_bad,
+                              dt_filename,
                               has_guano, 
                               dt_guano, 
                               lat_guano, 
