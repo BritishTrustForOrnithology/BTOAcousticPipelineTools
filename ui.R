@@ -129,12 +129,12 @@ ui <- fluidPage(
                  tags$ul(style = "font-size:11px",
                    tags$li("Total = total number of wav files in the folder."),
                    tags$li("Corrupt = wav file headers cannot be read; suggests the file is corrupt possibly due to incomplete save."),
-                   tags$li("Acceptable = wav files can be processed by the Pipeline as is because one or more of: i) the filename complies with Pipeline format; ii) metadata can be read from an XML file; iii) wav files contain embedded GUANO metadata."),
-                   tags$li("Bad filename = filenames do not comply with one of the expected formats. See Acoustic Pipeline Support Hub for more details."),
+                   tags$li("Acceptable = wav files can be processed by the Pipeline as they are owing to one or more of: i) the filename complies with Pipeline format; ii) metadata can be read from an XML file; iii) wav files contain embedded GUANO metadata."),
+                   tags$li("Bad filename = filenames do not comply with one of the expected formats. See Acoustic Pipeline Support Hub for more details. It is important to note that files with bad names can still be processed by the Pipeline if GUANO or XML files are present, but bad filenames can cause issues during later verification stages. Examples include where the file name is not unique in a dataset (e.g. 1630005.wav or 20230504_204212.wav)."),
                    tags$li("Has GUANO = wav files contain embedded GUANO metadata."),
                    tags$li("Has XML = wav files have paired (same name) XML file."),
-                   tags$li("Renambale = filenames are bad but sufficient metadata can be derived to rename the wav file in a Pipeline-friendly format."),
-                   tags$li("Cannot rename = filenames are bad but insufficient metadata can be derived to rename the files.")
+                   tags$li("Renamable = filenames are bad but sufficient metadata can be derived to rename the wav file in a Pipeline-friendly format."),
+                   tags$li("Cannot rename = filenames are bad but insufficient metadata can be derived to rename the files. If any files cannot be renamed in this batch the rename function is disabled until these issues are resolved.")
                  ),
                  tags$br(),
                  tags$div(
@@ -167,7 +167,7 @@ ui <- fluidPage(
                tags$div(
                  id = 'audit_newnames',
                  tags$h4('Suggested new file names'),
-                 tags$p('The table below shows a selection of the files, their original name and the proposed replacement names based on the date and time extracted from embedded GUANO and/or XML files. To accept these filenames and rename your original files use the rename button on the left.'),
+                 tags$p('The table below shows a selection of the files, their original name and the proposed replacement names based on the date, time and location (where possible) extracted from embedded GUANO and/or XML files. To accept these filenames and rename your original files use the rename button on the left. A log of all old and new filenames will be saved in the folder.'),
                  tableOutput('audit_proposed_names')
                )
            )
