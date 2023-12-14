@@ -144,7 +144,7 @@ server <- function(input, output, session) {
     
     #BOOLEANS
     #allow renaming only if: no files that can't be renamed, no duplicates will be generated
-    global$allow_rename <- ifelse(global$n_cannot_rename == 0 & global$n_duplicated_newnames == 0, TRUE, FALSE)
+    global$allow_rename <- ifelse(global$n_files_bad_names == global$n_files_in_batch & global$n_cannot_rename == 0 & global$n_duplicated_newnames == 0, TRUE, FALSE)
     #error 
     global$some_files_corrupt <- ifelse(global$n_files_corrupt > 0, TRUE, FALSE)
     global$some_files_unrenamable <- ifelse(global$n_files_bad_names > 0 & global$n_cannot_rename > 0, TRUE, FALSE)
@@ -433,14 +433,14 @@ server <- function(input, output, session) {
   #AUDIT SUCCESS ---------------------------------------------------------------
   #all fine
   output$audit_all_names_good = renderText(
-    if(global$all_names_good == TRUE) paste(global$n_files_acceptable, "of", global$n_files_in_batch, "files are acceptable for the Pipeline as they have names in Pipeline format. Renaming is not essential but can be done if a warning is shown.")
+    if(global$all_names_good == TRUE) paste(global$n_files_acceptable, "of", global$n_files_in_batch, "files are acceptable for the Pipeline as they have names in Pipeline format.")
   ) 
   output$audit_all_files_processable = renderText(
-    if(global$all_files_processable == TRUE) paste(global$n_files_acceptable, "of", global$n_files_in_batch, "files are acceptable for the Pipeline as they have names in Pipeline format and/or have associated GUANO/XML metadata. Renaming is not essential but can be done if a warning is shown.")
+    if(global$all_files_processable == TRUE) paste(global$n_files_acceptable, "of", global$n_files_in_batch, "files are acceptable for the Pipeline as they have names in Pipeline format and/or have associated GUANO/XML metadata. Renaming is recommended if files do not contain date and time, as such files may not be unique in aggregated datasets.")
   ) 
-  output$audit_all_files_renamable = renderText(
-    if(global$all_files_renamable == TRUE) paste("All files can be renamed into Pipeline format using associated GUANO/XML metadata without creating duplicates.")
-  ) 
+  # output$audit_all_files_renamable = renderText(
+  #   if(global$all_files_renamable == TRUE) paste("All files can be renamed into Pipeline format using associated GUANO/XML metadata without creating duplicates.")
+  # ) 
   
 
   
