@@ -133,7 +133,7 @@ audit_audio <- function(path_to_process, files) {
       
       #can it be renamed - only if filename bad and has datetime from guano or xml?
       renamable <- ifelse(filename_bad == 1 & !is.na(dt2use), 1, 0)
-  
+
       #can the file not be renamed - only relevant for files that are badly named?
       unrenamable <- ifelse(filename_bad == 1 & is.na(dt2use), 1, 0)
       
