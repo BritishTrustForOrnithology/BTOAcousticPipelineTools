@@ -78,7 +78,7 @@ audit_audio <- function(path_to_process, files) {
       lat_xml <- NA
       lon_xml <- NA
       dt_xml <- NA
-      file_xml <- gsub(".wav", ".xml", this_wav)
+      file_xml <- gsub(".wav|.WAV", ".xml", this_wav)
       if(!file.exists(file_xml)) {
         has_xml <- FALSE
       }
