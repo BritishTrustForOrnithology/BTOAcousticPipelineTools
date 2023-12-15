@@ -8,7 +8,7 @@ require(DT)
 require(xml2)
 
 
-source('R/defaults.R')
+source('R/utils.R')
 
 
 
@@ -96,9 +96,10 @@ server <- function(input, output, session) {
     hide(id = 'audit_batch_summary')
     hide(id = 'audit2')
     hide(id = 'audit3')
-    hide(id = 'audit_errors')
-    hide(id = 'audit_warnings')
-    hide(id = 'audit_info')
+    hide(id = 'audit_message')
+    # hide(id = 'audit_errors')
+    # hide(id = 'audit_warnings')
+    # hide(id = 'audit_info')
     hide(id = 'audit_newnames')
   } )
 
@@ -139,12 +140,17 @@ server <- function(input, output, session) {
     global$n_cannot_rename <- temp$n_cannot_rename
     global$n_duplicated_oldnames <- temp$n_duplicated_oldnames
     global$n_duplicated_newnames <- temp$n_duplicated_newnames
+    global$n_files_with_location <- temp$n_files_with_location
     global$summary_per_dir <- temp$summary_per_dir
     global$file_data <- temp$file_data
     
     #BOOLEANS
     #allow renaming only if: no files that can't be renamed, no duplicates will be generated
     global$allow_rename <- ifelse(global$n_files_bad_names == global$n_files_in_batch & global$n_cannot_rename == 0 & global$n_duplicated_newnames == 0, TRUE, FALSE)
+    
+    global$all_files_with_location <- ifelse(global$n_files_with_location == global$n_files_in_batch, TRUE, FALSE)
+    
+    
     #error 
     global$some_files_corrupt <- ifelse(global$n_files_corrupt > 0, TRUE, FALSE)
     global$some_files_unrenamable <- ifelse(global$n_files_bad_names > 0 & global$n_cannot_rename > 0, TRUE, FALSE)
@@ -161,21 +167,23 @@ server <- function(input, output, session) {
     #VISIBILITY ----------------------------------------------------------------    
     #toggle on visibility of batch summary block
     show(id = 'audit_batch_summary')
+    show(id = 'audit_message')
+    
 
     #toggle success panel    
-    if(global$all_names_good == TRUE | global$all_files_processable == TRUE | global$all_files_renamable == TRUE ) {
-      show(id='audit_info')
-    }
-    #toggle warnings panel
-    if(global$some_names_good == TRUE | global$no_names_good == TRUE | global$some_oldnames_duplicated == TRUE) {
-      show(id='audit_warnings')
-    }
+    #if(global$all_names_good == TRUE | global$all_files_processable == TRUE | global$all_files_renamable == TRUE ) {
+    #  show(id='audit_info')
+    #}
+    ##toggle warnings panel
+    #if(global$some_names_good == TRUE | global$no_names_good == TRUE | global$some_oldnames_duplicated == TRUE) {
+    #  show(id='audit_warnings')
+    #}
     #toggle errors panel - if errors should hide success if it appears
-    if(global$some_files_corrupt == TRUE | global$some_files_unrenamable == TRUE | global$some_newnames_duplicated == TRUE) {
-      hide(id='audit_info')
-      show(id='audit_errors')
-      disable(id = 'rename_audio')
-    }
+    #if(global$some_files_corrupt == TRUE | global$some_files_unrenamable == TRUE | global$some_newnames_duplicated == TRUE) {
+    #  hide(id='audit_info')
+    #  show(id='audit_errors')
+    #  disable(id = 'rename_audio')
+    #}
     #enable audio rename button
     if(global$allow_rename == TRUE) {
       show(id='audit3')
@@ -212,9 +220,10 @@ server <- function(input, output, session) {
     hide(id = 'audit_newnames')
     hide(id = 'audit2')
     hide(id = 'audit3')
-    hide(id = 'audit_errors')
-    hide(id = 'audit_warnings')
-    hide(id = 'audit_info')
+    hide(id = 'audit_message')
+    #hide(id = 'audit_errors')
+    #hide(id = 'audit_warnings')
+    #hide(id = 'audit_info')
     #and clear audit data
     global <- reactiveValues()
   })
@@ -403,41 +412,84 @@ server <- function(input, output, session) {
   )
   
 
-  
-  #AUDIT ERRORS ----------------------------------------------------------------
-  #there are corrupt files
-  output$audit_error_corrupt_files = renderText({
-    if(global$some_files_corrupt == TRUE) paste(global$n_files_corrupt, "of", global$n_files_in_batch, "files appear to be corrupt and cannot be read. See log_corrupt_files.txt for details.")
+  output$audit_message = renderText({
+    text <- 
+    
+    #files are corrupt  
+    if(global$some_files_corrupt == TRUE) {
+      paste(global$n_files_corrupt, "of", global$n_files_in_batch, "files appear to be corrupt and cannot be read. See log_corrupt_files.txt for details.") 
+    }
+    
+    #all names are good = good to go
+    else if(global$all_names_good == TRUE) {
+      paste('All files have names containing date and time in a format recognised by the Pipeline. They can be processed as they are.')
+    }
+    
+    #names are bad but GUANO/XML so processable and...
+    else if(global$all_names_good == FALSE & global$all_files_processable == TRUE) {
+      
+      #some files can't be renamed
+      if(global$some_files_unrenamable == TRUE) {
+        paste('Files are processable by the Pipeline owing to presence of GUANO and/or XML. However, filenames are not in a recognised format and we recommend files are renamed, ideally with location, date and time to avoid downstream duplication issues. Unfortunately, the app cannot find sufficient information to safely rename the files automatically. See log_cannot_rename.csv for details and correct manually before trying again.')
+      }
+      
+      #renaming will create duplicates
+      else if(global$some_newnames_duplicated == TRUE) {
+        paste('Files are processable by the Pipeline owing to presence of GUANO and/or XML. However, filenames are not in a recognised format and we recommend files are renamed, ideally with location, date and time to avoid downstream duplication issues. Unfortunately, the app cannot rename the files automatically as this will generate files with duplicate names. See log_potential_duplicate_new_names.csv for details.')
+      }
+      
+      else if(global$all_files_with_location == TRUE) {
+        paste('Files are processable by the Pipeline owing to presence of GUANO and/or XML. However, filenames are not in a recognised format and we recommend files are renamed. The app has extracted location, date and time from the metadata and suggested new filenames are indicated below. To proceed with renaming click the rename button below. If there are XML files associated with each WAV file these will also be renamed. Note that renaming cannot be undone. Once renamed, see log_renaming_metadata.csv for details.')
+      }
+      
+      else if(global$all_files_with_location == FALSE) {
+        paste('Files are processable by the Pipeline owing to presence of GUANO and/or XML. However, filenames are not in a recognised format and we recommend files are renamed. The app has extracted date and time from the metadata but was unable to extract location information. Suggested new filenames are indicated below, with the old filename as a suffix. To proceed with renaming click the rename button below. If there are XML files associated with each WAV file these will also be renamed. Note that renaming cannot be undone. Once renamed, see log_renaming_metadata.csv for details.')
+      }
+    } 
+    else if(global$all_names_good == FALSE & global$all_files_processable == FALSE) {
+      paste('Filenames are not in a recognised format and there is no embedded GUANO or associated XML file so these files cannot be processed by the Acoustic Pipeline as they are. Nor can the rename them automatically. You may have to rename the files manually or via bespoke scripts.')
+    }
+    
+    text
+    
   })
-  #bad names that can't be fixed
-  output$audit_error_rename_fail = renderText({
-    if(global$some_files_unrenamable == TRUE) paste(global$n_files_bad_names, "of", global$n_files_in_batch, "files need renaming to Pipeline format but of these", global$n_cannot_rename, "files cannot be automatically renamed owing to missing GUANO and/or XML metadata. See log_cannot_rename.csv for details and correct manually before trying again.")
-  })
-  #that duplicate file names will be made
-  output$audit_error_newname_dupe = renderText(
-    if(global$some_newnames_duplicated == TRUE) paste(global$n_files_bad_names, "of", global$n_files_in_batch, "files need renaming to Pipeline format but automatic renaming will create", global$n_duplicated_newnames, "files with non-unique names. We recommend you investigate this manually before retrying. See log_potential_duplicate_new_names.csv for details.")
-  ) 
   
   
-  #AUDIT WARNINGS --------------------------------------------------------------
-  #old names are duplicates  
-  output$audit_warning_oldname_dupe = renderText(
-    if(global$some_oldnames_duplicated == TRUE) paste('Across the selected folders there are', global$n_duplicated_oldnames, "files with apparently duplicated names. This can cause problems during downstream processing. If possible we recommend you rename the files to avoid confusion.")
-  )
-  #some_names_good
-  output$audit_warning_need_rename = renderText(
-    if(global$some_names_good == TRUE | global$no_names_good == TRUE) paste(global$n_files_bad_names, "of", global$n_files_in_batch, "files have names that do not meet Pipeline format.")
-  )
-
-
-  #AUDIT SUCCESS ---------------------------------------------------------------
-  #all fine
-  output$audit_all_names_good = renderText(
-    if(global$all_names_good == TRUE) paste(global$n_files_acceptable, "of", global$n_files_in_batch, "files are acceptable for the Pipeline as they have names in Pipeline format.")
-  ) 
-  output$audit_all_files_processable = renderText(
-    if(global$all_files_processable == TRUE) paste(global$n_files_acceptable, "of", global$n_files_in_batch, "files are acceptable for the Pipeline as they have names in Pipeline format and/or have associated GUANO/XML metadata. Renaming is recommended if files do not contain date and time, as such files may not be unique in aggregated datasets.")
-  ) 
+  
+  # #AUDIT ERRORS ----------------------------------------------------------------
+  # #there are corrupt files
+  # output$audit_error_corrupt_files = renderText({
+  #   if(global$some_files_corrupt == TRUE) paste(global$n_files_corrupt, "of", global$n_files_in_batch, "files appear to be corrupt and cannot be read. See log_corrupt_files.txt for details.")
+  # })
+  # #bad names that can't be fixed
+  # output$audit_error_rename_fail = renderText({
+  #   if(global$some_files_unrenamable == TRUE) paste(global$n_files_bad_names, "of", global$n_files_in_batch, "files need renaming to Pipeline format but of these", global$n_cannot_rename, "files cannot be automatically renamed owing to missing GUANO and/or XML metadata. See log_cannot_rename.csv for details and correct manually before trying again.")
+  # })
+  # #that duplicate file names will be made
+  # output$audit_error_newname_dupe = renderText(
+  #   if(global$some_newnames_duplicated == TRUE) paste(global$n_files_bad_names, "of", global$n_files_in_batch, "files need renaming to Pipeline format but automatic renaming will create", global$n_duplicated_newnames, "files with non-unique names. We recommend you investigate this manually before retrying. See log_potential_duplicate_new_names.csv for details.")
+  # ) 
+  # 
+  # 
+  # #AUDIT WARNINGS --------------------------------------------------------------
+  # #old names are duplicates  
+  # output$audit_warning_oldname_dupe = renderText(
+  #   if(global$some_oldnames_duplicated == TRUE) paste('Across the selected folders there are', global$n_duplicated_oldnames, "files with apparently duplicated names. This can cause problems during downstream processing. If possible we recommend you rename the files to avoid confusion.")
+  # )
+  # #some_names_good
+  # output$audit_warning_need_rename = renderText(
+  #   if(global$some_names_good == TRUE | global$no_names_good == TRUE) paste(global$n_files_bad_names, "of", global$n_files_in_batch, "files have names that do not meet Pipeline format.")
+  # )
+  # 
+  # 
+  # #AUDIT SUCCESS ---------------------------------------------------------------
+  # #all fine
+  # output$audit_all_names_good = renderText(
+  #   if(global$all_names_good == TRUE) paste(global$n_files_acceptable, "of", global$n_files_in_batch, "files are acceptable for the Pipeline as they have names in Pipeline format.")
+  # ) 
+  # output$audit_all_files_processable = renderText(
+  #   if(global$all_files_processable == TRUE) paste(global$n_files_acceptable, "of", global$n_files_in_batch, "files are acceptable for the Pipeline as they have names in Pipeline format and/or have associated GUANO/XML metadata. Renaming is recommended if files do not contain date and time, as such files may not be unique in aggregated datasets.")
+  # ) 
   # output$audit_all_files_renamable = renderText(
   #   if(global$all_files_renamable == TRUE) paste("All files can be renamed into Pipeline format using associated GUANO/XML metadata without creating duplicates.")
   # ) 
