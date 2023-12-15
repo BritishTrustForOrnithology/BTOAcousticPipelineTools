@@ -17,10 +17,14 @@ rename_audio_files <- function(path_to_process, file_info) {
   xmls_new <- gsub(".WAV|.wav", ".xml", files_new)
   
   #rename
-  withProgress(message = "Renaming audio files...", value = 0, {
+  withProgress(message = "Renaming audio files...", 
+               detail = 'For large batches this may take some time...', 
+               value = 0, {
     wavdone <- 0
     xmldone <- 0
     for(f in 1:length(files_old)) {
+      incProgress(1/length(files_old))
+      
       wav_rename_result <- FALSE
       xml_rename_result <- FALSE
       #rename wav
