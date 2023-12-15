@@ -448,7 +448,7 @@ server <- function(input, output, session) {
       }
     } 
     else {
-      paste('The app cannot work with this batch of files. This could be for a number of reasons including: all filenames are not in a recognised format and there is no embedded GUANO or associated XML file so these files cannot be processed by the Acoustic Pipeline as they are; filenames cannot be renamed automatically; the batch contains a combination of good and bad file names. You may have to rename the files manually or via bespoke scripts.')
+      paste('The app cannot work with this batch of files. This could be for a number of reasons including: some or all filenames are not in a recognised format and there is no embedded GUANO or associated XML file so these files cannot be processed by the Acoustic Pipeline as they are; filenames cannot be renamed automatically; the batch contains a combination of good and bad file names. You may have to rename the files manually or via bespoke scripts.')
     }
     
     text
