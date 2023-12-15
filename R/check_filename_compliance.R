@@ -22,7 +22,8 @@
 # check_filename_compliance(filename = '1232010-08-26_10_39_50_00667DEF.wav')     #petersson FAIL (numeric end)
 # check_filename_compliance(filename = 'ABC2010-06-31_10_39_50_M00667DEF.wav')    #petersson FAIL (bad date)
 # check_filename_compliance(filename = 'C:/20120812-091406.wav')                  #audiomoth ERROR (included path)
-  
+# check_filename_compliance(filename = '2023-09-27 05-08-58.wav')                 #titley PASS  
+
 check_filename_compliance <- function(filename) {
   if(basename(filename) != filename) stop(paste('Passed filename should not include path:', filename))
   
@@ -67,6 +68,16 @@ check_filename_compliance <- function(filename) {
     dtbit <- regmatches(filename, regexpr("\\d{4}-\\d{2}-\\d{2}_\\d{2}_\\d{2}_\\d{2}", filename))
     #can this be interpreted as a date time?
     dt_filename <- format(as.POSIXct(dtbit, format = "%Y-%m-%d_%H_%M_%S"), "%Y%m%d_%H%M%S")
+    good <- !is.na(dt_filename)
+  }
+  
+  #Titley format
+  #2023-09-27 05-08-58.wav
+  pattern_titley <- "(?:^|[^0-9])\\d{4}-\\d{2}-\\d{2} \\d{2}-\\d{2}-\\d{2}[^0-9]"
+  if(grepl(pattern_titley, filename) == TRUE) {
+    dtbit <- regmatches(filename, regexpr("\\d{4}-\\d{2}-\\d{2} \\d{2}-\\d{2}-\\d{2}", filename))
+    #can this be interpreted as a date time?
+    dt_filename <- format(as.POSIXct(dtbit, format = "%Y-%m-%d %H-%M-%S"), "%Y%m%d_%H%M%S")
     good <- !is.na(dt_filename)
   }
   
