@@ -139,7 +139,7 @@ ui <- fluidPage(
                  tags$br(),
                  tags$div(
                     id = 'audit_message',
-                    style="color: DarkBlue;",
+                    style="color: red;",
                     tags$h4("Audit Recommendation"),
                     textOutput('audit_message')
                  ),
