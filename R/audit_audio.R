@@ -16,8 +16,13 @@ audit_audio <- function(path_to_process, files) {
   outs <- list()
   
   #for each file check...
-  withProgress(message = "Analysing audio files...", min = 0, max = length(files), {
+  withProgress(message = "Analysing audio files...", 
+               detail = 'For large batches this may take some time...', 
+               value = 0, {
     for(f in 1:length(files)) {
+      
+      incProgress(1/length(files))
+      
       this_wav <- files[f]
       this_dirname <- dirname(this_wav)
       this_file <- basename(this_wav)
