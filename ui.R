@@ -5,7 +5,7 @@ require(shinyjs)
 #require(tidyr)
 #require(DT)
 
-source('R/defaults.R')
+source('R/utils.R')
 
 #define the UI
 ui <- fluidPage(
@@ -138,30 +138,37 @@ ui <- fluidPage(
                  ),
                  tags$br(),
                  tags$div(
-                   id = 'audit_errors',
-                   style="color: red",
-                   tags$h4("Errors", style="color: red;"),
-                   textOutput('audit_error_corrupt_files'),
-                   textOutput('audit_error_rename_fail'),
-                   textOutput('audit_error_newname_dupe')
+                    id = 'audit_message',
+                    style="color: DarkBlue;",
+                    tags$h4("Audit Recommendation"),
+                    textOutput('audit_message')
                  ),
                  tags$br(),
-                 tags$div(
-                   id = 'audit_warnings',
-                   style="color: DarkOrange",
-                   tags$h4("Warnings", style="color: DarkOrange;"),
-                   textOutput('audit_warning_oldname_dupe'),
-                   textOutput('audit_warning_need_rename'),
-                 ),
-                 tags$br(),
-                 tags$div(
-                   id = 'audit_info',
-                   style="color: DarkGreen",
-                   tags$h4("Information", style="color: DarkGreen;"),
-                   textOutput('audit_all_names_good'),
-                   textOutput('audit_all_files_processable'),
-                   textOutput('audit_all_files_renamable')
-                 ),
+                 # tags$div(
+                 #   id = 'audit_errors',
+                 #   style="color: red",
+                 #   tags$h4("Errors", style="color: red;"),
+                 #   textOutput('audit_error_corrupt_files'),
+                 #   textOutput('audit_error_rename_fail'),
+                 #   textOutput('audit_error_newname_dupe')
+                 # ),
+                 # tags$br(),
+                 # tags$div(
+                 #   id = 'audit_warnings',
+                 #   style="color: DarkOrange",
+                 #   tags$h4("Warnings", style="color: DarkOrange;"),
+                 #   textOutput('audit_warning_oldname_dupe'),
+                 #   textOutput('audit_warning_need_rename'),
+                 # ),
+                 # tags$br(),
+                 # tags$div(
+                 #   id = 'audit_info',
+                 #   style="color: DarkGreen",
+                 #   tags$h4("Information", style="color: DarkGreen;"),
+                 #   textOutput('audit_all_names_good'),
+                 #   textOutput('audit_all_files_processable'),
+                 #   textOutput('audit_all_files_renamable')
+                 # ),
                  tags$br(),
                ),
                tags$div(
