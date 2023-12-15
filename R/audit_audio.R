@@ -137,11 +137,13 @@ audit_audio <- function(path_to_process, files) {
       #can the file not be renamed - only relevant for files that are badly named?
       unrenamable <- ifelse(filename_bad == 1 & is.na(dt2use), 1, 0)
       
+      has_location <- ifelse(!is.na(lat2use) & !is.na(lon2use), 1, 0)
+      
       #if the file can be renamed based on data, create newname
       newname <- NA
       if(renamable==1) {
         #if lat and lon both available, use them
-        if(!is.na(lat2use) & !is.na(lon2use)) {
+        if(has_location == 1) {
           #convert lat-long to character and replace decimal point with ~ as required for some batviewer apps
           lat <- gsub("\\.", "~", as.character(lat2use))
           lon <- gsub("\\.", "~", as.character(lon2use))
@@ -149,8 +151,8 @@ audit_audio <- function(path_to_process, files) {
           newname <- file.path(this_dirname, trimws(paste0(lat, "+", lon, "_", dt2use, ".wav")))
         }
         #if either lat or long unavailable use datetime renaming with old filename suffix
-        if(is.na(lat2use) | is.na(lon2use)) {
-          newname <- file.path(this_dirname, trimws(paste0(dt2use,"_old_",this_file)))
+        if(has_location == 0) {
+          newname <- file.path(this_dirname, trimws(paste0(dt2use,"_",this_file)))
         }
       }
   
@@ -172,6 +174,7 @@ audit_audio <- function(path_to_process, files) {
                               dt_mismatch,
                               lat_mismatch,
                               lon_mismatch,
+                              has_location,
                               renamable, 
                               new_name = newname, 
                               unrenamable)
@@ -207,7 +210,7 @@ audit_audio <- function(path_to_process, files) {
   n_duplicated_oldnames <- sum(file_data$oldname_duplicated)          #how many of the original filenames are duplicates?
   n_duplicated_newnames <- sum(file_data$newname_duplicated)          #how many of the new filenames will be duplicates?
   n_cannot_rename <- sum(file_data$unrenamable)                       #how many can't be renamed?
-  
+  n_files_with_location <- sum(file_data$has_location)                #how many files have location info
   
   output <- list(n_files = n_files,
                  n_dirs = n_dirs,
@@ -218,6 +221,7 @@ audit_audio <- function(path_to_process, files) {
                  n_cannot_rename = n_cannot_rename,
                  n_duplicated_oldnames = n_duplicated_oldnames,
                  n_duplicated_newnames = n_duplicated_newnames,
+                 n_files_with_location = n_files_with_location,
                  #data
                  summary_per_dir = summary_per_dir,
                  file_data = file_data)
