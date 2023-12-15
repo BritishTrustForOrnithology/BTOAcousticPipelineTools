@@ -37,7 +37,7 @@ rename_audio_files <- function(path_to_process, file_info) {
   
   #make and save log
   prefix <- format(Sys.time(), "%Y%m%d_%H%M%S_")
-  file_log <- file.path(path_to_process, paste0(prefix,"pipeline tools renaming metadata log.csv"))
+  file_log <- file.path(path_to_process, paste0(prefix,"log_renaming_metadata.csv"))
   write.csv(file_info, file = file_log, row.names = FALSE)
 
   if(done_all == TRUE) {
