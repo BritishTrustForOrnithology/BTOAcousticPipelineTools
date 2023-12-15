@@ -161,6 +161,7 @@ server <- function(input, output, session) {
     global$some_oldnames_duplicated <- ifelse(global$n_duplicated_oldnames > 0, TRUE, FALSE)
     #info
     global$all_names_good <- ifelse(global$n_files_bad_names == 0, TRUE, FALSE)
+    global$all_names_bad <- ifelse(global$n_files_bad_names == global$n_files_in_batch, TRUE, FALSE)
     global$all_files_processable <- ifelse(global$n_files_acceptable == global$n_files_in_batch, TRUE, FALSE)
     global$all_files_renamable <- ifelse(global$n_files_bad_names > 0 & global$n_cannot_rename == 0 & global$n_duplicated_newnames == 0, TRUE, FALSE)
     
@@ -425,8 +426,8 @@ server <- function(input, output, session) {
       paste('All files have names containing date and time in a format recognised by the Pipeline. They can be processed as they are.')
     }
     
-    #names are bad but GUANO/XML so processable and...
-    else if(global$all_names_good == FALSE & global$all_files_processable == TRUE) {
+    #all names are bad but GUANO/XML so processable and...
+    else if(global$all_names_bad == TRUE & global$all_files_processable == TRUE) {
       
       #some files can't be renamed
       if(global$some_files_unrenamable == TRUE) {
@@ -446,8 +447,8 @@ server <- function(input, output, session) {
         paste('Files are processable by the Pipeline owing to presence of GUANO and/or XML. However, filenames are not in a recognised format and we recommend files are renamed. The app has extracted date and time from the metadata but was unable to extract location information. Suggested new filenames are indicated below, with the old filename as a suffix. To proceed with renaming click the rename button below. If there are XML files associated with each WAV file these will also be renamed. Note that renaming cannot be undone. Once renamed, see log_renaming_metadata.csv for details.')
       }
     } 
-    else if(global$all_names_good == FALSE & global$all_files_processable == FALSE) {
-      paste('Filenames are not in a recognised format and there is no embedded GUANO or associated XML file so these files cannot be processed by the Acoustic Pipeline as they are. Nor can the rename them automatically. You may have to rename the files manually or via bespoke scripts.')
+    else {
+      paste('The app cannot work with this batch of files. This could be for a number of reasons including: all filenames are not in a recognised format and there is no embedded GUANO or associated XML file so these files cannot be processed by the Acoustic Pipeline as they are; filenames cannot be renamed automatically; the batch contains a combination of good and bad file names. You may have to rename the files manually or via bespoke scripts.')
     }
     
     text
