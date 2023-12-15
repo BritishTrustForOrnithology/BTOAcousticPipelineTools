@@ -1,5 +1,9 @@
 #' Read a single GUANO file
 #' 
+#' @details Modified from the GUANO metadata package for R, 
+#' https://github.com/riggsd/guano-r/blob/master/guano/R/guano.R Accessed: 
+#' 22/09/2023  Licencse MIT.
+#' 
 #' @param filename The GUANO filename or path
 #' @param verbose Whether to print the raw GUANO lines before parsing data types
 #' @return list of named metadata fields
