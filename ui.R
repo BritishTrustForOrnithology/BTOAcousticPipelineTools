@@ -80,7 +80,7 @@ ui <- fluidPage(
                       GUANO metadata from wav files."),
                tags$p('When renaming the app will attempt to rename files in the format latitude+longitude_date_time.wav,
                       e.g. 50~9191+-2~757_20230622_220502.wav. If location cannot be gleaned from metadata 
-                      the file will be renamed in the format date_time_old_oldname.wav, e.g. 20230622_220502_old_1234567.wav. 
+                      the file will be renamed in the format date_time_oldname.wav, e.g. 20230622_220502_1234567.wav. 
                       We append the old filename into the new one to reduce chances of creating duplicate names. It is 
                       your responsibility to check the errors and warning carefully before renaming.'),
                tags$p("Please note, this utility will rename your original audio files with no option to undo. 
@@ -143,32 +143,6 @@ ui <- fluidPage(
                     tags$h4("Audit Recommendation"),
                     textOutput('audit_message')
                  ),
-                 tags$br(),
-                 # tags$div(
-                 #   id = 'audit_errors',
-                 #   style="color: red",
-                 #   tags$h4("Errors", style="color: red;"),
-                 #   textOutput('audit_error_corrupt_files'),
-                 #   textOutput('audit_error_rename_fail'),
-                 #   textOutput('audit_error_newname_dupe')
-                 # ),
-                 # tags$br(),
-                 # tags$div(
-                 #   id = 'audit_warnings',
-                 #   style="color: DarkOrange",
-                 #   tags$h4("Warnings", style="color: DarkOrange;"),
-                 #   textOutput('audit_warning_oldname_dupe'),
-                 #   textOutput('audit_warning_need_rename'),
-                 # ),
-                 # tags$br(),
-                 # tags$div(
-                 #   id = 'audit_info',
-                 #   style="color: DarkGreen",
-                 #   tags$h4("Information", style="color: DarkGreen;"),
-                 #   textOutput('audit_all_names_good'),
-                 #   textOutput('audit_all_files_processable'),
-                 #   textOutput('audit_all_files_renamable')
-                 # ),
                  tags$br(),
                ),
                tags$div(

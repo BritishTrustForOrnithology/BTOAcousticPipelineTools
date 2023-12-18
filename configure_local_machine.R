@@ -22,4 +22,4 @@ install_packages <- function(packages) {
 }
 
 #get CRAN packages
-install_packages(packages = c("shiny", "shinyFiles", "shinyalert", "shinyjs", "devtools", "tidyr", "DT") )
+install_packages(packages = c("shiny", "shinyFiles", "shinyalert", "shinyjs", "devtools", "tidyr", "DT", "xml2", "tuneR") )

@@ -14,7 +14,7 @@ An R Shiny App to help with auditing audio recordings processed with the BTO Aco
 
 You will need R installed on your computer. We have tested the app on R versions 3.6.1 and 4.2. You do not need to have RStudio installed but if you are familiar with it this may be an easier way to run the code.
 
-You will need the following R packages installed. If you are not familiar with installing R packages we have provided a configuration program (see below). You will only need to run this once. Required packages = shiny, shinyAlert, shinyFiles, shinyjs, devtools, tidyr, DT.
+You will need the following R packages installed. If you are not familiar with installing R packages we have provided a configuration program (see below). You will only need to run this once. Required packages = shiny, shinyAlert, shinyFiles, shinyjs, devtools, tidyr, DT, xml2, tuneR.
 
 
 ## Installation
@@ -33,6 +33,8 @@ You will need the following R packages installed. If you are not familiar with i
 
 
 ## Change Log
+
+18/12/2023 - version 2. Major update to what was formerly a utility to rename Batlogger files, now renamed Preprocessing and extending functionality to include processing of old Batlogger files with associated XML files. Also now does a basic check for corrupt files. Version 2.0 now requires additional packages xml2 and tuneR.
 
 22/09/2023 - removed dependency on guano-r as a) this does not always install easily for new users and b) this does not parse Wildlife Acoustics GUANO metadata properly. Now custom functions based on guano-r are included within the Shiny app code.
 
