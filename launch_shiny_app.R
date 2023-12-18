@@ -15,8 +15,8 @@
 #'
 #'  4. Run all command lines and the app will launch in a browser winder.
 
-#path to where app is saved on your machine- update if necessary
-path_to_app <- 'app.R'
+#path to where app is saved on your machine. Update if the launch_shiny_app.R is in a different folder to ui.R
+path_to_app <- '.'
 
 #run the app
 shiny::shinyOptions(path_audio=NULL, path_output=NULL)
