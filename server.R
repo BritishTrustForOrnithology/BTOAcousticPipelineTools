@@ -401,7 +401,7 @@ server <- function(input, output, session) {
     
     #files are corrupt  
     if(global$some_files_corrupt == TRUE) {
-      paste(global$n_files_corrupt, "of", global$n_files_in_batch, "files appear to be corrupt and cannot be read. See log_corrupt_files.txt for details.") 
+      paste(global$n_files_corrupt, "of", global$n_files_in_batch, "files appear to be corrupt and cannot be read. See YYYYMMDD_log_corrupt_files.csv for details.") 
     }
     
     #all names are good = good to go
@@ -414,20 +414,20 @@ server <- function(input, output, session) {
       
       #some files can't be renamed
       if(global$some_files_unrenamable == TRUE) {
-        paste('Files are processable by the Pipeline owing to presence of GUANO and/or XML. However, filenames are not in a recognised format and we recommend files are renamed, ideally with location, date and time to avoid downstream duplication issues. Unfortunately, the app cannot find sufficient information to safely rename the files automatically. See log_cannot_rename.csv for details and correct manually before trying again.')
+        paste('Files are processable by the Pipeline owing to presence of GUANO and/or XML. However, filenames are not in a recognised format and we recommend files are renamed, ideally with location, date and time to avoid downstream duplication issues. Unfortunately, the app cannot find sufficient information to safely rename the files automatically. See YYYYMMDD_log_cannot_rename.csv for details and correct manually before trying again.')
       }
       
       #renaming will create duplicates
       else if(global$some_newnames_duplicated == TRUE) {
-        paste('Files are processable by the Pipeline owing to presence of GUANO and/or XML. However, filenames are not in a recognised format and we recommend files are renamed, ideally with location, date and time to avoid downstream duplication issues. Unfortunately, the app cannot rename the files automatically as this will generate files with duplicate names. See log_potential_duplicate_new_names.csv for details.')
+        paste('Files are processable by the Pipeline owing to presence of GUANO and/or XML. However, filenames are not in a recognised format and we recommend files are renamed, ideally with location, date and time to avoid downstream duplication issues. Unfortunately, the app cannot rename the files automatically as this will generate files with duplicate names. See YYYYMMDD_log_potential_duplicate_new_names.csv for details.')
       }
       
       else if(global$all_files_with_location == TRUE) {
-        paste('Files are processable by the Pipeline owing to presence of GUANO and/or XML. However, filenames are not in a recognised format and we recommend files are renamed. The app has extracted location, date and time from the metadata and suggested new filenames are indicated below. To proceed with renaming click the rename button below. If there are XML files associated with each WAV file these will also be renamed. Note that renaming cannot be undone. Once renamed, see log_renaming_metadata.csv for details.')
+        paste('Files are processable by the Pipeline owing to presence of GUANO and/or XML. However, filenames are not in a recognised format and we recommend files are renamed. The app has extracted location, date and time from the metadata and suggested new filenames are indicated below. To proceed with renaming click the rename button below. If there are XML files associated with each WAV file these will also be renamed. Note that renaming cannot be undone. Once renamed, see YYYYMMDD_log_renaming_metadata.csv for details.')
       }
       
       else if(global$all_files_with_location == FALSE) {
-        paste('Files are processable by the Pipeline owing to presence of GUANO and/or XML. However, filenames are not in a recognised format and we recommend files are renamed. The app has extracted date and time from the metadata but was unable to extract location information. Suggested new filenames are indicated below, with the old filename as a suffix. To proceed with renaming click the rename button below. If there are XML files associated with each WAV file these will also be renamed. Note that renaming cannot be undone. Once renamed, see log_renaming_metadata.csv for details.')
+        paste('Files are processable by the Pipeline owing to presence of GUANO and/or XML. However, filenames are not in a recognised format and we recommend files are renamed. The app has extracted date and time from the metadata but was unable to extract location information. Suggested new filenames are indicated below, with the old filename as a suffix. To proceed with renaming click the rename button below. If there are XML files associated with each WAV file these will also be renamed. Note that renaming cannot be undone. Once renamed, see YYYYMMDD_log_renaming_metadata.csv for details.')
       }
     } 
     else {
