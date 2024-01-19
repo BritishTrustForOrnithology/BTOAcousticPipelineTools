@@ -19,21 +19,22 @@ You will need the following R packages installed. If you are not familiar with i
 
 ## Installation
 
-1 Open R, either directly or through RStudio.
-2 Download the package of R code: click the green "Code" button above and select Download ZIP. 
-3 Save and unzip the download. Remember where this is as you'll need to navigate to it to run the app.
-4 Open RStudio, in top menu go to File > Open Project, and browse to where you have unzipped the code and select BTOAcousticPipelineToolsPUBLIC.Rproj
+1. Open R, either directly or through RStudio.
+2. Download the package of R code: click the green "Code" button above and select Download ZIP. 
+3. Save and unzip the download. Remember where this is as you'll need to navigate to it to run the app.
+4. Open RStudio, in top menu go to File > Open Project, and browse to where you have unzipped the code and select BTOAcousticPipelineToolsPUBLIC.Rproj
 ![Screenshot](https://github.com/BritishTrustForOrnithology/BTOAcousticPipelineTools/blob/main/www/help_open_project.jpg)
-5 In the lower right Files panel, open the file called *configure_local_machine.R*. Run this script to install/update the required R packages. This only needs to be done once on each computer (though you may need to repeat it if you update R).
-6 Now proceed to the **Usage** section below
+
+5. In the lower right Files panel, open the file called *configure_local_machine.R*. Run this script to install/update the required R packages. This only needs to be done once on each computer (though you may need to repeat it if you update R).
+6. Now proceed to the **Usage** section below
 
 
 ## Usage
 
-1 If you do not have the BTOAcousticPipelineTools package already open, repeat step 4 above
-2 Open the script file called *launch_shiny_app.R*. Follow the instructions there. Provided you have followed step 4 above you should not need to edit anything in this script. To run the script press the green Run App button near the top of the screen.
-3 For very large validation jobs (e.g. for a batch of >100,000 wav files) it may be more efficient to directly provide the paths to the audio and output directories at startup, rather than using the folder browser buttons. This can be done by adding these to the shinyOptions command as detailed in 'launch_shiny_app.R'. 
-4 Running the 'launch_shiny_app.R' will open the app in a new browser window.
+1. If you do not have the BTOAcousticPipelineTools package already open, repeat step 4 above
+2. Open the script file called *launch_shiny_app.R*. Follow the instructions there. Provided you have followed step 4 above you should not need to edit anything in this script. To run the script press the green Run App button near the top of the screen.
+3. For very large validation jobs (e.g. for a batch of >100,000 wav files) it may be more efficient to directly provide the paths to the audio and output directories at startup, rather than using the folder browser buttons. This can be done by adding these to the shinyOptions command as detailed in 'launch_shiny_app.R'. 
+4. Running the 'launch_shiny_app.R' will open the app in a new browser window.
 
 
 ## Change Log
