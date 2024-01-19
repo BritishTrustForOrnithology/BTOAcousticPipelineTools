@@ -269,7 +269,8 @@ server <- function(input, output, session) {
       xtab$`Copy Method`[i] <- as.character(selectInput(paste(xtab$`Species Code`[i]),
                                                         "",
                                                         choices = c("None", "Top hits", "High certainty only", "High & Low certainty", "Random sample"),
-                                                        selected = xtab$method_default[i]
+                                                        selected = xtab$method_default[i],
+                                                        selectize = FALSE
       )
       )
     }
