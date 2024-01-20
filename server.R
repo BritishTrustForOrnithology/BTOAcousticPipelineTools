@@ -7,13 +7,14 @@ require(tidyr)
 require(DT)
 require(xml2)
 
-
 source('R/utils.R')
 
 
 
 #define the server
 server <- function(input, output, session) {
+  
+  version_check(path_to_app)
   
   #set up various global defaults  
   global <- reactiveValues(
