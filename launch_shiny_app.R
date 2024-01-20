@@ -2,9 +2,10 @@
 #'
 #'  1. Do not run the ui.R or server.R scripts directly. Instead use launch_shiny_app.R
 #'  
-#'  2. Edit the path_to_app line to give the location of the folder containing 
-#'     server.R program on your computer. Note that you must use forward (/) 
-#'     slashes and a final dot, e.g.:
+#'  2. If you have opened the code as a Project, leave path_to_app as '.'
+#'     If you have directly opened this file, edit the path_to_app line to give 
+#'     the location of the folder containing server.R program on your computer. 
+#'     Note that you must use forward (/) slashes and a final dot, e.g.:
 #'     path_to_app <- 'C:/Users/jo.smith/Downloads/BTOAcousticPipelineTools-main/.'
 #'
 #'  3. For most users you do not need to change the shinyOptions line. But if you
