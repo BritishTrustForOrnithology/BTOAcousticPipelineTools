@@ -37,6 +37,11 @@ You will need the following R packages installed. If you are not familiar with i
 4. Running the 'launch_shiny_app.R' will open the app in a new browser window.
 
 
+## How to update
+
+Periodically we will release new versions of the app, adding new features or to reflect changes in the dependencies. To update the app on your computer we recommend you delete your existing copy from your computer and start afresh following the Installation instructions above. Please also re-read the Usage instructions in case they have changed since your previous version.
+
+
 ## Change Log
 
 19/01/2024- version 2.1. Minor update to get table select inputs working again with shiny version 1.8.0. Also app version is checked at startup.
