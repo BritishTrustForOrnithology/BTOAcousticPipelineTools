@@ -44,7 +44,9 @@ Periodically we will release new versions of the app, adding new features or to 
 
 ## Change Log
 
-19/01/2024- version 2.1. Minor update to get table select inputs working again with shiny version 1.8.0. Also app version is checked at startup.
+14/03/2024 - version 2.2. Minor update to update the copy method so it tries to preserve file modified timestamps.
+
+19/01/2024 - version 2.1. Minor update to get table select inputs working again with shiny version 1.8.0. Also app version is checked at startup.
 
 18/12/2023 - version 2. Major update to what was formerly a utility to rename Batlogger files, now renamed Preprocessing and extending functionality to include processing of old Batlogger files with associated XML files. Also now does a basic check for corrupt files. Version 2.0 now requires additional packages xml2 and tuneR.
 
