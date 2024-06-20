@@ -113,6 +113,7 @@ read_AP_csv <- function(file) {
     dat$file2move <- paste0(dat$file2move, '.wav')
     dat$location <- paste(dat$latitude, dat$longitude, sep='~')
     dat$english.name <- ifelse(!is.na(dat$call.type), paste0(dat$english.name, " (", dat$call.type, ")"), dat$english.name)
+    dat$species <- ifelse(!is.na(dat$call.type), paste(dat$species, dat$call.type, sep='-'), dat$species)
     #drop redundant columns
     dat <- subset(dat, select=c('file2move', 'location', 'survey.date','species', 'scientific.name', 'english.name', 'species.group', 'probability'))
     cat(file=stderr(), "Success reading AUDIBLE format file\n")
