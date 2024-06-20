@@ -9,8 +9,6 @@ version <- read.csv(file.path(dirname(path_to_app),'version.txt'), colClasses = 
 #get the drive letters
 volumes <- shinyFiles::getVolumes()()
 
-
-
 #' Convert ISO 8601 timestamps into strings - IGNORE TIMEZONE FOR THIS PURPOSE
 #' Modified from the GUANO metadata package for R, 
 #' https://github.com/riggsd/guano-r/blob/master/guano/R/guano.R Accessed: 

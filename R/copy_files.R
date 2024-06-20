@@ -38,7 +38,7 @@ copy_files <- function(wavs_to_copy, path_output, append_identity) {
       name_old <- this_rec$filepath
       name_new <- file.path(path_output, this_rec$dir, this_rec$file)
       
-      file.copy(from = name_old, to = name_new)
+      file.copy(from = name_old, to = name_new, copy.date = TRUE)
       
       # Increment the progress bar, and update the detail text.
       incProgress(1/maxits, detail = r)

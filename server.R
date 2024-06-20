@@ -7,13 +7,14 @@ require(tidyr)
 require(DT)
 require(xml2)
 
-
 source('R/utils.R')
 
 
 
 #define the server
 server <- function(input, output, session) {
+  
+  version_check(path_to_app)
   
   #set up various global defaults  
   global <- reactiveValues(
@@ -269,7 +270,8 @@ server <- function(input, output, session) {
       xtab$`Copy Method`[i] <- as.character(selectInput(paste(xtab$`Species Code`[i]),
                                                         "",
                                                         choices = c("None", "Top hits", "High certainty only", "High & Low certainty", "Random sample"),
-                                                        selected = xtab$method_default[i]
+                                                        selected = xtab$method_default[i],
+                                                        selectize = FALSE
       )
       )
     }
