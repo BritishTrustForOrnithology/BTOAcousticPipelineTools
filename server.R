@@ -258,7 +258,7 @@ server <- function(input, output, session) {
     #set defaults for copy method
     xtab$method_default <- 'High certainty only'
     xtab$method_default <- ifelse(xtab$species == 'No ID', "None", xtab$method_default)
-    xtab$method_default <- ifelse(xtab$species == 'Pippip', "Random sample", xtab$method_default)
+    xtab$method_default <- ifelse(substr(xtab$species,1,6) == 'Pippip', "Random sample", xtab$method_default)
     xtab$method_default <- ifelse(xtab$species.group == 'bush-cricket', "Top hits", xtab$method_default)
     xtab$method_default <- ifelse(xtab$species.group == 'moth', "Top hits", xtab$method_default)
     
