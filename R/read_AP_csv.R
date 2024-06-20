@@ -93,6 +93,10 @@ read_AP_csv <- function(file) {
     names(dat)[which(names(dat)=='original.file.name')] <- 'file2move'
     dat$location <- paste(dat$latitude, dat$longitude, sep='~')
     dat$english.name <- ifelse(!is.na(dat$call.type), paste0(dat$english.name, " (", dat$call.type, ")"), dat$english.name)
+    dat$call.type <- ifelse(dat$call.type=='echolocation', 'E', dat$call.type)
+    dat$call.type <- ifelse(dat$call.type=='social', 'S', dat$call.type)
+    dat$call.type <- ifelse(dat$call.type=='feeding buzz', 'B', dat$call.type)
+    dat$species <- ifelse(!is.na(dat$call.type), paste(dat$species, dat$call.type, sep='-'), dat$species)
     #drop redundant columns
     dat <- subset(dat, select=c('file2move', 'location', 'survey.date','species', 'scientific.name', 'english.name', 'species.group', 'probability'))
     cat(file=stderr(), "Success reading ULTRASONIC format file\n")
