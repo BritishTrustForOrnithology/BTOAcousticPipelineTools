@@ -36,7 +36,7 @@ read_AP_csv <- function(file) {
   
   #which format of file is this?
   type <- NA
-  if(length(names(dat)) == 13) {
+  if(length(names(dat)) == 14) {
     type <- 'offline'
   }
   if(length(names(dat)) == 19) {
@@ -50,7 +50,7 @@ read_AP_csv <- function(file) {
   #offline file format
   if(type == 'offline') {
     cat(file=stderr(), "Trying OFFLINE format file\n")
-    expnames <- "upload_directory,filename,prefix,species,probability,actual_date,session_date,time,scientific_name,english_name,group,warnings,classifier_code"
+    expnames <- "upload_directory,filename,prefix,species,probability,actual_date,session_date,time,scientific_name,english_name,group,call_type,warnings,classifier_code"
     if(expnames != paste(names(dat), collapse=',')) {
       msg <- paste0('Unexpected OFFLINE file format. \nExpected: ',expnames,'\nGot: ', paste(names(dat), collapse=','))
       stop(msg)
@@ -60,8 +60,14 @@ read_AP_csv <- function(file) {
     names(dat)[which(names(dat)=='session_date')] <- 'survey.date'
     names(dat)[which(names(dat)=='scientific_name')] <- 'scientific.name'
     names(dat)[which(names(dat)=='english_name')] <- 'english.name'
+    names(dat)[which(names(dat)=='call_type')] <- 'call.type'
     names(dat) <- gsub("_", ".", names(dat))
     dat$location <- dat$prefix
+    dat$english.name <- ifelse(!is.na(dat$call.type) & dat$call.type !="", paste0(dat$english.name, " (", dat$call.type, ")"), dat$english.name)
+    dat$call.type <- ifelse(dat$call.type=='echolocation', '', dat$call.type)
+    dat$call.type <- ifelse(dat$call.type=='social', 'social', dat$call.type)
+    dat$call.type <- ifelse(dat$call.type=='feeding buzz', 'buzz', dat$call.type)
+    dat$species <- ifelse(!is.na(dat$call.type) & dat$call.type != "", paste(dat$species, dat$call.type, sep='-'), dat$species)
     #drop redundant columns
     dat <- subset(dat, select=c('file2move', 'location', 'survey.date','species', 'scientific.name', 'english.name', 'species.group', 'probability'))
     cat(file=stderr(), "Success reading OFFLINE format file\n")
@@ -92,11 +98,12 @@ read_AP_csv <- function(file) {
     }
     names(dat)[which(names(dat)=='original.file.name')] <- 'file2move'
     dat$location <- paste(dat$latitude, dat$longitude, sep='~')
-    dat$english.name <- ifelse(!is.na(dat$call.type), paste0(dat$english.name, " (", dat$call.type, ")"), dat$english.name)
-    dat$call.type <- ifelse(dat$call.type=='echolocation', 'E', dat$call.type)
-    dat$call.type <- ifelse(dat$call.type=='social', 'S', dat$call.type)
-    dat$call.type <- ifelse(dat$call.type=='feeding buzz', 'B', dat$call.type)
-    dat$species <- ifelse(!is.na(dat$call.type), paste(dat$species, dat$call.type, sep='-'), dat$species)
+    dat$english.name <- ifelse(!is.na(dat$call.type) & dat$call.type !="", paste0(dat$english.name, " (", dat$call.type, ")"), dat$english.name)
+    dat$call.type <- ifelse(dat$call.type=='echolocation', '', dat$call.type)
+    dat$call.type <- ifelse(dat$call.type=='social', 'social', dat$call.type)
+    dat$call.type <- ifelse(dat$call.type=='feeding buzz', 'buzz', dat$call.type)
+    dat$species <- ifelse(!is.na(dat$call.type) & dat$call.type != "", paste(dat$species, dat$call.type, sep='-'), dat$species)
+    
     #drop redundant columns
     dat <- subset(dat, select=c('file2move', 'location', 'survey.date','species', 'scientific.name', 'english.name', 'species.group', 'probability'))
     cat(file=stderr(), "Success reading ULTRASONIC format file\n")
